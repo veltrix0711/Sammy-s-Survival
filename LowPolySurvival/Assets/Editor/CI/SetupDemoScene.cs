@@ -7,6 +7,7 @@ using LowPolySurvival.Game.Gameplay.Data;
 using LowPolySurvival.Game.Gameplay.Systems;
 using LowPolySurvival.Game.Gameplay.Demo;
 using LowPolySurvival.Game.Core.Persistence;
+using LowPolySurvival.Game.Gameplay.Player;
 
 public static class SetupDemoScene
 {
@@ -58,6 +59,14 @@ public static class SetupDemoScene
 		}
 		var scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
 
+		// Ground plane for testing
+		if (GameObject.Find("Ground") == null)
+		{
+			var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
+			ground.name = "Ground";
+			ground.transform.position = Vector3.zero;
+		}
+
 		// Create root and components
 		var root = GameObject.Find("DemoRoot");
 		if (root == null) root = new GameObject("DemoRoot");
@@ -106,6 +115,25 @@ public static class SetupDemoScene
 		gsSO.ApplyModifiedPropertiesWithoutUndo();
 		EditorUtility.SetDirty(gameStateGo);
 		EditorUtility.SetDirty(gameState);
+
+		// Player
+		var player = GameObject.Find("Player");
+		if (player == null)
+		{
+			player = new GameObject("Player");
+			player.transform.position = new Vector3(0, 1.1f, -3f);
+			player.AddComponent<CharacterController>();
+			player.AddComponent<SimplePlayerController>();
+		}
+		var pi = player.GetComponent<PlayerInteraction>();
+		if (pi == null) pi = player.AddComponent<PlayerInteraction>();
+		var piSO = new SerializedObject(pi);
+		piSO.FindProperty("inventory").objectReferenceValue = inventory;
+		piSO.FindProperty("clothBandage").objectReferenceValue = demo;
+		piSO.FindProperty("clothDef").objectReferenceValue = cloth;
+		piSO.ApplyModifiedPropertiesWithoutUndo();
+		EditorUtility.SetDirty(player);
+		EditorUtility.SetDirty(pi);
 
 		// HUD
 		var hudGo = GameObject.Find("DemoHUD");
