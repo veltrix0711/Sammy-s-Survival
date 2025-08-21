@@ -24,6 +24,7 @@ public class WeaponViewerWindow : EditorWindow
 	private bool playing;
 	private float playhead;
 	private double lastTime;
+	private Animator previewAnimator;
 
 	[MenuItem("Tools/Weapon Viewer")] 
 	public static void Open() => GetWindow<WeaponViewerWindow>("Weapon Viewer");
@@ -54,6 +55,8 @@ public class WeaponViewerWindow : EditorWindow
 			EditorGUILayout.Space(6);
 			DrawAnimationUI();
 			EditorGUILayout.Space(6);
+			DrawAnimatorParametersUI();
+			EditorGUILayout.Space(6);
 			DrawUtilityUI();
 			EditorGUILayout.Space(6);
 			DrawAttachmentEditor();
@@ -73,6 +76,22 @@ public class WeaponViewerWindow : EditorWindow
 			weaponInstance.transform.localPosition = Vector3.zero;
 			weaponInstance.transform.localRotation = Quaternion.identity;
 		}
+		// Animator setup
+		previewAnimator = null;
+		if (weapon.AnimatorController != null)
+		{
+			previewAnimator = weaponInstance != null ? weaponInstance.GetComponentInChildren<Animator>() : null;
+			if (previewAnimator == null && weaponInstance != null)
+			{
+				previewAnimator = weaponInstance.AddComponent<Animator>();
+			}
+			if (previewAnimator != null)
+			{
+				previewAnimator.runtimeAnimatorController = weapon.AnimatorController;
+				previewAnimator.Rebind();
+				previewAnimator.Update(0f);
+			}
+		}
 		// Load clips
 		clips = null;
 		clipIndex = 0;
@@ -83,6 +102,54 @@ public class WeaponViewerWindow : EditorWindow
 			clips = weapon.AnimatorController.animationClips;
 		}
 		AnimationMode.StopAnimationMode();
+	}
+
+	private void DrawAnimatorParametersUI()
+	{
+		EditorGUILayout.LabelField("Animator Parameters", EditorStyles.boldLabel);
+		if (previewAnimator == null || previewAnimator.runtimeAnimatorController == null)
+		{
+			EditorGUILayout.HelpBox("No Animator on preview. Assign an AnimatorController on the WeaponDefinition.", MessageType.Info);
+			return;
+		}
+		var @params = previewAnimator.parameters;
+		if (@params == null || @params.Length == 0)
+		{
+			EditorGUILayout.HelpBox("Animator has no exposed parameters.", MessageType.None);
+			return;
+		}
+		foreach (var p in @params)
+		{
+			switch (p.type)
+			{
+				case AnimatorControllerParameterType.Float:
+				{
+					float v = previewAnimator.GetFloat(p.nameHash);
+					float nv = EditorGUILayout.Slider(p.name, v, -10f, 10f);
+					if (!Mathf.Approximately(v, nv)) previewAnimator.SetFloat(p.nameHash, nv);
+					break;
+				}
+				case AnimatorControllerParameterType.Int:
+				{
+					int v = previewAnimator.GetInteger(p.nameHash);
+					int nv = EditorGUILayout.IntField(p.name, v);
+					if (v != nv) previewAnimator.SetInteger(p.nameHash, nv);
+					break;
+				}
+				case AnimatorControllerParameterType.Bool:
+				{
+					bool v = previewAnimator.GetBool(p.nameHash);
+					bool nv = EditorGUILayout.Toggle(p.name, v);
+					if (v != nv) previewAnimator.SetBool(p.nameHash, nv);
+					break;
+				}
+				case AnimatorControllerParameterType.Trigger:
+				{
+					if (GUILayout.Button($"Trigger {p.name}")) previewAnimator.SetTrigger(p.nameHash);
+					break;
+				}
+			}
+		}
 	}
 
 	private void DrawSlotsUI()

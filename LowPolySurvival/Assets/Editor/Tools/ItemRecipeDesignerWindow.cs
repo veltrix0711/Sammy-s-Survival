@@ -30,6 +30,14 @@ public class ItemRecipeDesignerWindow : EditorWindow
 	// Addons
 	private string addonId = "";
 	private string addonName = "";
+	private string compatibleSlotsCsv = "";
+	private GameObject addonPrefabObj;
+	private Vector3 addonLocalPos;
+	private Vector3 addonLocalEuler;
+	private Vector3 addonLocalScale = Vector3.one;
+	private float addonWeightDelta = 0.1f;
+	private float recoilMult = 1f;
+	private float spreadMult = 1f;
 
 	// Recipes
 	private string recipeId = "";
@@ -78,6 +86,8 @@ public class ItemRecipeDesignerWindow : EditorWindow
 		itemName = EditorGUILayout.TextField("Display Name", itemName);
 		weight = EditorGUILayout.FloatField("Weight (kg)", weight);
 		volume = EditorGUILayout.FloatField("Volume (L)", volume);
+		EditorGUILayout.LabelField("Tags");
+		DrawStringArray(ref tags);
 		var sel = GUILayout.SelectionGrid(-1, scalePresetNames, 3);
 		if (sel >= 0) scalePreset = scalePresetValues[sel];
 		sourcePrefab = (GameObject)EditorGUILayout.ObjectField("Source Prefab (optional)", sourcePrefab, typeof(GameObject), false);
@@ -92,6 +102,15 @@ public class ItemRecipeDesignerWindow : EditorWindow
 		EditorGUILayout.LabelField("Create Addon", EditorStyles.boldLabel);
 		addonId = EditorGUILayout.TextField("Addon Id", addonId);
 		addonName = EditorGUILayout.TextField("Display Name", addonName);
+		EditorGUILayout.LabelField("Compatible Slot Types (comma-separated)");
+		compatibleSlotsCsv = EditorGUILayout.TextField(compatibleSlotsCsv);
+		addonPrefabObj = (GameObject)EditorGUILayout.ObjectField("Addon Prefab", addonPrefabObj, typeof(GameObject), false);
+		addonLocalPos = EditorGUILayout.Vector3Field("Local Position Offset", addonLocalPos);
+		addonLocalEuler = EditorGUILayout.Vector3Field("Local Euler Offset", addonLocalEuler);
+		addonLocalScale = EditorGUILayout.Vector3Field("Local Scale", addonLocalScale);
+		addonWeightDelta = EditorGUILayout.FloatField("Weight Delta (kg)", addonWeightDelta);
+		recoilMult = EditorGUILayout.FloatField("Recoil Multiplier", recoilMult);
+		spreadMult = EditorGUILayout.FloatField("Spread Multiplier", spreadMult);
 		if (GUILayout.Button("Create AddonDefinition"))
 		{
 			CreateAddon();
@@ -282,6 +301,7 @@ public class ItemRecipeDesignerWindow : EditorWindow
 		so.FindProperty("displayName").stringValue = itemName;
 		so.FindProperty("weightKg").floatValue = weight;
 		so.FindProperty("volumeLiters").floatValue = volume;
+		ApplyStringArray(so.FindProperty("tags"), tags);
 		so.ApplyModifiedPropertiesWithoutUndo();
 		EditorUtility.SetDirty(def);
 		AssetDatabase.SaveAssets();
@@ -304,6 +324,14 @@ public class ItemRecipeDesignerWindow : EditorWindow
 		var so = new SerializedObject(def);
 		so.FindProperty("addonId").stringValue = addonId;
 		so.FindProperty("displayName").stringValue = addonName;
+		ApplyStringArray(so.FindProperty("compatibleSlotTypes"), ParseCsv(compatibleSlotsCsv));
+		so.FindProperty("addonPrefab").objectReferenceValue = addonPrefabObj;
+		so.FindProperty("localPositionOffset").vector3Value = addonLocalPos;
+		so.FindProperty("localEulerOffset").vector3Value = addonLocalEuler;
+		so.FindProperty("localScale").vector3Value = addonLocalScale;
+		so.FindProperty("weightDeltaKg").floatValue = addonWeightDelta;
+		so.FindProperty("recoilMultiplier").floatValue = recoilMult;
+		so.FindProperty("spreadMultiplier").floatValue = spreadMult;
 		so.ApplyModifiedPropertiesWithoutUndo();
 		EditorUtility.SetDirty(def);
 		AssetDatabase.SaveAssets();
@@ -401,6 +429,37 @@ public class ItemRecipeDesignerWindow : EditorWindow
 		}
 		AssetDatabase.Refresh();
 		EditorUtility.DisplayDialog("Backup Created", backupDir, "OK");
+	}
+
+	// Helpers
+	private string[] tags = System.Array.Empty<string>();
+	private void DrawStringArray(ref string[] arr)
+	{
+		int count = arr?.Length ?? 0;
+		int newCount = EditorGUILayout.IntField("Count", count);
+		if (newCount != count)
+		{
+			System.Array.Resize(ref arr, Mathf.Max(0, newCount));
+		}
+		for (int i = 0; i < arr.Length; i++)
+		{
+			arr[i] = EditorGUILayout.TextField($"[{i}]", arr[i]);
+		}
+	}
+
+	private void ApplyStringArray(SerializedProperty prop, string[] values)
+	{
+		prop.arraySize = values?.Length ?? 0;
+		for (int i = 0; i < prop.arraySize; i++)
+		{
+			prop.GetArrayElementAtIndex(i).stringValue = values[i];
+		}
+	}
+
+	private string[] ParseCsv(string csv)
+	{
+		if (string.IsNullOrWhiteSpace(csv)) return System.Array.Empty<string>();
+		return csv.Split(',').Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s)).ToArray();
 	}
 
 	private bool ValidateFolder(string path)
