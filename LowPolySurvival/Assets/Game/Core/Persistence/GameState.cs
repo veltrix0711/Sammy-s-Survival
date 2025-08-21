@@ -11,54 +11,78 @@ namespace LowPolySurvival.Game.Core.Persistence
 		[System.Serializable]
 		private class SaveBundle
 		{
-			public Dictionary<string, string> subsystemJson = new Dictionary<string, string>();
-			public Dictionary<string, string> identifiedJson = new Dictionary<string, string>();
+			[System.Serializable]
+			public class Pair { public string key; public string value; }
+			public System.Collections.Generic.List<Pair> subsystem = new System.Collections.Generic.List<Pair>();
+			public System.Collections.Generic.List<Pair> identified = new System.Collections.Generic.List<Pair>();
 		}
 
 		public void Save()
 		{
-			var bundle = new SaveBundle();
-			foreach (var mb in savableComponents)
+			try
 			{
-				if (mb is ISavable s)
+				var bundle = new SaveBundle();
+				foreach (var mb in savableComponents)
 				{
-					bundle.subsystemJson[mb.GetType().FullName] = s.SaveToJson();
+					if (mb is ISavable s)
+					{
+						bundle.subsystem.Add(new SaveBundle.Pair { key = mb.GetType().FullName, value = s.SaveToJson() });
+					}
 				}
+				// Discover identified savables in scene
+				foreach (var idSav in UnityEngine.Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
+				{
+					if (idSav is IIdentifiedSavable isv)
+					{
+						var key = isv.GetSaveKey();
+						if (!string.IsNullOrEmpty(key)) bundle.identified.Add(new SaveBundle.Pair { key = key, value = isv.SaveToJson() });
+					}
+				}
+				var json = JsonUtility.ToJson(bundle);
+				repository.Write(json);
+				Debug.Log("GameState: Save completed.");
 			}
-			// Discover identified savables in scene
-			foreach (var idSav in UnityEngine.Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
+			catch (System.Exception ex)
 			{
-				if (idSav is IIdentifiedSavable isv)
-				{
-					var key = isv.GetSaveKey();
-					if (!string.IsNullOrEmpty(key)) bundle.identifiedJson[key] = isv.SaveToJson();
-				}
+				Debug.LogError($"GameState: Save failed: {ex.Message}\n{ex.StackTrace}");
 			}
-			var json = JsonUtility.ToJson(bundle);
-			repository.Write(json);
 		}
 
 		public void Load()
 		{
-			var json = repository.Read();
-			if (string.IsNullOrEmpty(json)) return;
-			var bundle = JsonUtility.FromJson<SaveBundle>(json);
-			foreach (var mb in savableComponents)
+			try
 			{
-				if (mb is ISavable s && bundle.subsystemJson.TryGetValue(mb.GetType().FullName, out var sub))
+				var json = repository.Read();
+				if (string.IsNullOrEmpty(json)) return;
+				var bundle = JsonUtility.FromJson<SaveBundle>(json);
+				var subsystemDict = new System.Collections.Generic.Dictionary<string, string>();
+				var identifiedDict = new System.Collections.Generic.Dictionary<string, string>();
+				if (bundle?.subsystem != null)
+					foreach (var p in bundle.subsystem) if (p != null && !string.IsNullOrEmpty(p.key)) subsystemDict[p.key] = p.value;
+				if (bundle?.identified != null)
+					foreach (var p in bundle.identified) if (p != null && !string.IsNullOrEmpty(p.key)) identifiedDict[p.key] = p.value;
+				foreach (var mb in savableComponents)
 				{
-					s.LoadFromJson(sub);
+					if (mb is ISavable s && subsystemDict.TryGetValue(mb.GetType().FullName, out var sub))
+					{
+						s.LoadFromJson(sub);
+					}
 				}
+				// Restore identified savables
+				foreach (var idSav in UnityEngine.Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
+				{
+					if (idSav is IIdentifiedSavable isv)
+					{
+						var key = isv.GetSaveKey();
+						if (!string.IsNullOrEmpty(key) && identifiedDict.TryGetValue(key, out var j))
+							isv.LoadFromJson(j);
+					}
+				}
+				Debug.Log("GameState: Load completed.");
 			}
-			// Restore identified savables
-			foreach (var idSav in UnityEngine.Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
+			catch (System.Exception ex)
 			{
-				if (idSav is IIdentifiedSavable isv)
-				{
-					var key = isv.GetSaveKey();
-					if (!string.IsNullOrEmpty(key) && bundle.identifiedJson.TryGetValue(key, out var j))
-						isv.LoadFromJson(j);
-				}
+				Debug.LogError($"GameState: Load failed: {ex.Message}\n{ex.StackTrace}");
 			}
 		}
 
