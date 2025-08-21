@@ -40,3 +40,8 @@ This pipeline enables environment and character work in parallel to systems prog
 - Example biome scene: `LowPolySurvival/Assets/Scenes/World/Biomes/Temperate/Temperate_Biome.unity`
 - Example chunk scene: `LowPolySurvival/Assets/Scenes/World/Biomes/Temperate/Chunks/Chunk_0_0.unity`
 - Example POI scene: `LowPolySurvival/Assets/Scenes/POI/Safehouse.unity`
+
+## Remote Collaboration & Branching
+- Use additive scenes per biome/chunk to minimize merge conflicts; each contributor edits distinct scenes.
+- For remote devices, keep working copies in separate branches; PR into `dev` regularly.
+- Validation tool (planned): an EditorWindow that scans scenes for naming, scale, colliders, and URP materials before commit.
