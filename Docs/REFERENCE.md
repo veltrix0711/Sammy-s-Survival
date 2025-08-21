@@ -103,3 +103,4 @@ This section is the single source of truth for project alignment. All major chan
 - ui: minimal Container UI to transfer items between player and container
 - crafting: wired inventory consumption/production; nearby bench search; added Recipe UI to trigger crafting
 - review: designer expanded (Weapons tab with stats/slots, drag-and-drop addon preview); next: attachment simulation preview and animation hooks
+- tools: Weapon Viewer added (preview weapon prefab, select mounts, drag-and-drop addon attach/detach preview)
