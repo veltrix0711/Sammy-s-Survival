@@ -111,3 +111,4 @@ This section is the single source of truth for project alignment. All major chan
 - voxel tip: add VoxelDebugCarver to Player, set World reference (or it auto-finds), LMB=dig, RMB=place
 - voxel contrast: applied checker texture on lit material for depth cues; chunk has MeshCollider for grounding
 - player: adjusted CharacterController movement to ensure proper grounding and gravity
+ - change: temporarily disable runtime voxel generation; add simple ground tool for testing. Use Tools → Chunk Painter → Create Simple Ground Plane.

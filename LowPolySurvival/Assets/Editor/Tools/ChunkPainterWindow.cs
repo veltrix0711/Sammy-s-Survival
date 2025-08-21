@@ -35,6 +35,12 @@ public class ChunkPainterWindow : EditorWindow
 		{
 			CreateStaticChunk();
 		}
+		EditorGUILayout.Space(8);
+		GUILayout.Label("Fallback Ground", EditorStyles.boldLabel);
+		if (GUILayout.Button("Create Simple Ground Plane (10x10m)"))
+		{
+			CreateSimpleGroundPlane();
+		}
 	}
 
 	private string ChunkPath() => Path.Combine(worldRoot, $"Chunk_{chunkX}_{chunkY}.unity");
@@ -89,5 +95,15 @@ public class ChunkPainterWindow : EditorWindow
 			mr.sharedMaterial = assignMaterial;
 		}
 		Selection.activeGameObject = go;
+	}
+
+	private void CreateSimpleGroundPlane()
+	{
+		var plane = GameObject.CreatePrimitive(PrimitiveType.Plane);
+		plane.name = "Ground_Plane_10x10";
+		plane.transform.position = Vector3.zero;
+		var col = plane.GetComponent<MeshCollider>();
+		if (col != null) { col.convex = false; col.inflateMesh = true; }
+		Selection.activeGameObject = plane;
 	}
 }

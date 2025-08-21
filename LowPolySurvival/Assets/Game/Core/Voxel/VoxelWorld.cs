@@ -8,7 +8,7 @@ namespace LowPolySurvival.Game.Core.Voxel
 		[SerializeField] private Vector3Int chunkDimensions = new Vector3Int(16, 128, 16);
 		[SerializeField] private int viewDistanceChunks = 6;
         [SerializeField] private float voxelSize = 1f;
-        [SerializeField] private bool generateOnPlay = true;
+        [SerializeField] private bool generateOnPlay = false; // default off; enable explicitly when needed
         [SerializeField] private Material chunkMaterial;
         private VoxelChunk chunk;
 
