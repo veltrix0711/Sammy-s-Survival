@@ -10,6 +10,7 @@ namespace LowPolySurvival.Game.Gameplay.Player
 		[SerializeField] private float lookSensitivity = 2f;
 		[SerializeField] private float gravity = -9.81f;
 		[SerializeField] private Camera playerCamera;
+		[SerializeField] private bool useLegacyInput = true; // set false if using new Input System only
 
 		private CharacterController controller;
 		private float pitch;
@@ -31,6 +32,7 @@ namespace LowPolySurvival.Game.Gameplay.Player
 				camGo.transform.localRotation = Quaternion.identity;
 			}
 			Cursor.lockState = CursorLockMode.Locked;
+			Cursor.visible = false;
 		}
 
 		private void Update()
@@ -43,8 +45,29 @@ namespace LowPolySurvival.Game.Gameplay.Player
 			playerCamera.transform.localRotation = Quaternion.Euler(pitch, 0, 0);
 
 			// Movement
-			float h = Input.GetAxisRaw("Horizontal");
-			float v = Input.GetAxisRaw("Vertical");
+			float h = 0f, v = 0f;
+			if (useLegacyInput)
+			{
+				h = Input.GetAxisRaw("Horizontal");
+				v = Input.GetAxisRaw("Vertical");
+			}
+			else
+			{
+#if ENABLE_INPUT_SYSTEM
+				var kb = UnityEngine.InputSystem.Keyboard.current;
+				if (kb != null)
+				{
+					if (kb.wKey.isPressed) v += 1f;
+					if (kb.sKey.isPressed) v -= 1f;
+					if (kb.dKey.isPressed) h += 1f;
+					if (kb.aKey.isPressed) h -= 1f;
+				}
+#else
+				// Fallback to legacy if new input system not enabled
+				h = Input.GetAxisRaw("Horizontal");
+				v = Input.GetAxisRaw("Vertical");
+#endif
+			}
 			Vector3 input = new Vector3(h, 0, v);
 			Vector3 world = transform.TransformDirection(input.normalized) * moveSpeed;
 			velocity.x = world.x;
