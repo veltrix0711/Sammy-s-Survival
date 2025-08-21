@@ -7,13 +7,14 @@ using LowPolySurvival.Game.Gameplay.Data;
 
 public class ItemRecipeDesignerWindow : EditorWindow
 {
-	private enum Tab { Items, Addons, Recipes, Tools }
+	private enum Tab { Items, Addons, Recipes, Weapons, Tools }
 	private Tab activeTab;
 
 	// Common
 	private string itemsFolder = "Assets/Content/ScriptableObjects/Items";
 	private string addonsFolder = "Assets/Content/ScriptableObjects/Addons";
 	private string recipesFolder = "Assets/Content/ScriptableObjects/Recipes";
+	private string weaponsFolder = "Assets/Content/ScriptableObjects/Weapons";
 	private string prefabsFolder = "Assets/Content/Prefabs";
 
 	// Items
@@ -48,13 +49,14 @@ public class ItemRecipeDesignerWindow : EditorWindow
 	private void OnGUI()
 	{
 		DrawHeader();
-		activeTab = (Tab)GUILayout.Toolbar((int)activeTab, new[] { "Items", "Addons", "Recipes", "Tools" });
+		activeTab = (Tab)GUILayout.Toolbar((int)activeTab, new[] { "Items", "Addons", "Recipes", "Weapons", "Tools" });
 		EditorGUILayout.Space(6);
 		switch (activeTab)
 		{
 			case Tab.Items: DrawItemsTab(); break;
 			case Tab.Addons: DrawAddonsTab(); break;
 			case Tab.Recipes: DrawRecipesTab(); break;
+			case Tab.Weapons: DrawWeaponsTab(); break;
 			case Tab.Tools: DrawToolsTab(); break;
 		}
 	}
@@ -155,6 +157,113 @@ public class ItemRecipeDesignerWindow : EditorWindow
 		{
 			CreateDocsBackup();
 		}
+	}
+
+	// WEAPONS
+	private string weaponId = "";
+	private string weaponName = "";
+	private float wDamage = 10f, wFireRate = 5f, wRecoil = 1f, wSpread = 1f, wWeight = 3f;
+	private GameObject weaponPrefab;
+	private RuntimeAnimatorController weaponAnimator;
+	private List<WeaponDefinition.Slot> weaponSlots = new List<WeaponDefinition.Slot>();
+	private Vector2 slotsScroll;
+	private AddonDefinition dragAddon;
+
+	private void DrawWeaponsTab()
+	{
+		EditorGUILayout.LabelField("Create Weapon", EditorStyles.boldLabel);
+		weaponId = EditorGUILayout.TextField("Weapon Id", weaponId);
+		weaponName = EditorGUILayout.TextField("Display Name", weaponName);
+		wDamage = EditorGUILayout.FloatField("Base Damage", wDamage);
+		wFireRate = EditorGUILayout.FloatField("Fire Rate (rps)", wFireRate);
+		wRecoil = EditorGUILayout.FloatField("Recoil", wRecoil);
+		wSpread = EditorGUILayout.FloatField("Spread (deg)", wSpread);
+		wWeight = EditorGUILayout.FloatField("Weight (kg)", wWeight);
+		weaponPrefab = (GameObject)EditorGUILayout.ObjectField("Weapon Prefab", weaponPrefab, typeof(GameObject), false);
+		weaponAnimator = (RuntimeAnimatorController)EditorGUILayout.ObjectField("Animator", weaponAnimator, typeof(RuntimeAnimatorController), false);
+
+		EditorGUILayout.Space(6);
+		EditorGUILayout.LabelField("Slots", EditorStyles.boldLabel);
+		slotsScroll = EditorGUILayout.BeginScrollView(slotsScroll, GUILayout.Height(120));
+		for (int i = 0; i < weaponSlots.Count; i++)
+		{
+			var s = weaponSlots[i];
+			EditorGUILayout.BeginHorizontal();
+			s.slotType = EditorGUILayout.TextField(s.slotType, GUILayout.Width(120));
+			s.mountPointName = EditorGUILayout.TextField(s.mountPointName, GUILayout.Width(180));
+			weaponSlots[i] = s;
+			if (GUILayout.Button("-", GUILayout.Width(24))) { weaponSlots.RemoveAt(i); i--; }
+			EditorGUILayout.EndHorizontal();
+		}
+		EditorGUILayout.EndScrollView();
+		if (GUILayout.Button("+ Add Slot")) weaponSlots.Add(new WeaponDefinition.Slot { slotType = "Muzzle", mountPointName = "MuzzlePoint" });
+
+		EditorGUILayout.Space(6);
+		EditorGUILayout.LabelField("Addon Drag & Drop Preview", EditorStyles.boldLabel);
+		Rect dropArea = GUILayoutUtility.GetRect(0.0f, 60.0f, GUILayout.ExpandWidth(true));
+		GUI.Box(dropArea, dragAddon == null ? "Drag AddonDefinition here" : $"Holding: {dragAddon.DisplayName}");
+		HandleDragAndDrop(dropArea);
+
+		if (GUILayout.Button("Create WeaponDefinition"))
+		{
+			CreateWeapon();
+		}
+	}
+
+	private void HandleDragAndDrop(Rect dropArea)
+	{
+		var e = Event.current;
+		switch (e.type)
+		{
+			case EventType.DragUpdated:
+			case EventType.DragPerform:
+				if (!dropArea.Contains(e.mousePosition)) return;
+				DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+				if (e.type == EventType.DragPerform)
+				{
+					DragAndDrop.AcceptDrag();
+					foreach (var obj in DragAndDrop.objectReferences)
+					{
+						if (obj is AddonDefinition ad) { dragAddon = ad; break; }
+					}
+				}
+				Event.current.Use();
+				break;
+		}
+	}
+
+	private void CreateWeapon()
+	{
+		if (!ValidateFolder(weaponsFolder)) return;
+		if (string.IsNullOrWhiteSpace(weaponId) || string.IsNullOrWhiteSpace(weaponName))
+		{
+			EditorUtility.DisplayDialog("Invalid", "Weapon Id and Display Name are required.", "OK");
+			return;
+		}
+		var path = Path.Combine(weaponsFolder, weaponName + ".asset");
+		var def = ScriptableObject.CreateInstance<WeaponDefinition>();
+		AssetDatabase.CreateAsset(def, path);
+		var so = new SerializedObject(def);
+		so.FindProperty("weaponId").stringValue = weaponId;
+		so.FindProperty("displayName").stringValue = weaponName;
+		so.FindProperty("baseDamage").floatValue = wDamage;
+		so.FindProperty("fireRate").floatValue = wFireRate;
+		so.FindProperty("recoil").floatValue = wRecoil;
+		so.FindProperty("spread").floatValue = wSpread;
+		so.FindProperty("baseWeightKg").floatValue = wWeight;
+		so.FindProperty("weaponPrefab").objectReferenceValue = weaponPrefab;
+		so.FindProperty("animatorController").objectReferenceValue = weaponAnimator;
+		var slotsProp = so.FindProperty("slots");
+		slotsProp.arraySize = weaponSlots.Count;
+		for (int i = 0; i < weaponSlots.Count; i++)
+		{
+			slotsProp.GetArrayElementAtIndex(i).FindPropertyRelative("slotType").stringValue = weaponSlots[i].slotType;
+			slotsProp.GetArrayElementAtIndex(i).FindPropertyRelative("mountPointName").stringValue = weaponSlots[i].mountPointName;
+		}
+		so.ApplyModifiedPropertiesWithoutUndo();
+		EditorUtility.SetDirty(def);
+		AssetDatabase.SaveAssets();
+		Selection.activeObject = def;
 	}
 
 	private void CreateItem()
