@@ -71,5 +71,32 @@ namespace LowPolySurvival.Game.Core.Persistence
 		{
 			repository.Write(json);
 		}
+
+		private void Awake()
+		{
+			// Ensure repository exists
+			if (repository == null)
+			{
+				repository = UnityEngine.Object.FindFirstObjectByType<SaveRepository>();
+				if (repository == null)
+				{
+					repository = gameObject.AddComponent<SaveRepository>();
+				}
+			}
+			// Auto-collect savables if array is empty
+			if (savableComponents == null || savableComponents.Length == 0)
+			{
+				var all = UnityEngine.Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
+				var list = new System.Collections.Generic.List<MonoBehaviour>();
+				foreach (var mb in all)
+				{
+					if (mb == null || mb == (MonoBehaviour)this) continue;
+					if (mb is IIdentifiedSavable) continue; // handled separately
+					if (mb is ISavable) list.Add(mb);
+				}
+				savableComponents = list.ToArray();
+				Debug.Log($"GameState: Auto-collected {savableComponents.Length} savable components.");
+			}
+		}
 	}
 }
