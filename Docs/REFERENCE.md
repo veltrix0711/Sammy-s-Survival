@@ -112,3 +112,4 @@ This section is the single source of truth for project alignment. All major chan
 - voxel contrast: applied checker texture on lit material for depth cues; chunk has MeshCollider for grounding
 - player: adjusted CharacterController movement to ensure proper grounding and gravity
  - change: temporarily disable runtime voxel generation; add simple ground tool for testing. Use Tools → Chunk Painter → Create Simple Ground Plane.
+ - editor: Weapon Viewer upgraded — per-slot drag/drop attach, attachment transform editor (with scene handles), Animator parameter controls, and saving prefab variants and `WeaponDefinition` variants. Designer enhanced — addon fields (compatibility, prefab, offsets, modifiers) and item tags authoring.
