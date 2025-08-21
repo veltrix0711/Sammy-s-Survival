@@ -9,6 +9,7 @@ namespace LowPolySurvival.Game.Core.Voxel
 		[SerializeField] private int viewDistanceChunks = 6;
         [SerializeField] private float voxelSize = 1f;
         [SerializeField] private bool generateOnPlay = true;
+        [SerializeField] private Material chunkMaterial;
         private VoxelChunk chunk;
 
 		public Vector3Int ChunkDimensions => chunkDimensions;
@@ -32,6 +33,7 @@ namespace LowPolySurvival.Game.Core.Voxel
 				go.transform.position = Vector3.zero;
 				chunk = go.AddComponent<VoxelChunk>();
 				chunk.Initialize(new Vector3Int(Mathf.Max(4, chunkDimensions.x), Mathf.Max(8, chunkDimensions.y/4), Mathf.Max(4, chunkDimensions.z)), voxelSize);
+				if (chunkMaterial != null) chunk.SetMaterial(chunkMaterial);
 				// Make a shallow platform near ground for visibility
 				chunk.GenerateFlatFill(1);
 				chunk.RebuildMesh();
