@@ -1,0 +1,30 @@
+######################
+# Unity
+[Libraries]
+[Liberally ignore Library/, Temp/, Obj/, Logs/, MemoryCaptures/, Builds/, UserSettings/, .vs/, .vscode/, Rider/, *.csproj, *.sln, *.user, *.pidb, *.unityproj, *.suo]
+Library/
+Temp/
+Obj/
+Logs/
+UserSettings/
+MemoryCaptures/
+Builds/
+.idea/
+.vs/
+*.csproj
+*.sln
+*.user
+*.pidb
+*.unityproj
+*.suo
+# OS
+.DS_Store
+Thumbs.db
+# Unity caches
+Assets/Plugins/Editor/JetBrains*
+# TextMesh Pro auto
+Assets/TextMesh Pro/*
+!Assets/TextMesh Pro/Resources/*
+######################
+
+

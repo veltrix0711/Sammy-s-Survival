@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+set -e
+files=$(git diff --cached --name-only -z | tr "\0" "\n")
+if [ -z "$files" ]; then exit 0; fi
+fail=0
+scan(){ pattern="$1"; desc="$2"; echo "$files" | xargs -r -n1 -I{} sh -c "git show :{} | grep -I -n -E \"$pattern\" > /dev/null && echo Secret pattern [$desc] in {} && exit 1 || exit 0" || fail=1; }
+scan "-----BEGIN( RSA)? PRIVATE KEY-----" "Private key"
+scan "BEGIN OPENSSH PRIVATE KEY" "SSH private key"
+scan "AKIA[0-9A-Z]{16}" "AWS Access Key ID"
+scan "aws(.{0,20})?secret(.{0,20})?key(.{0,20})?[=:][ \t\"\']?[A-Za-z0-9/+=]{40}" "AWS Secret Key"
+scan "ghp_[A-Za-z0-9]{36}" "GitHub token"
+scan "xox[baprs]-[A-Za-z0-9-]{10,48}" "Slack token"
+scan "AIza[0-9A-Za-z\-_]{35}" "Google API Key"
+if [ $fail -ne 0 ]; then echo "Commit blocked: potential secret detected."; exit 1; fi
+exit 0

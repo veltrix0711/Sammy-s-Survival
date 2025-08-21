@@ -1,0 +1,25 @@
+name: ci
+on:
+  pull_request:
+    branches: [ main, dev ]
+  push:
+    branches: [ dev ]
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate repo structure
+        shell: bash
+        run: |
+          echo "Checking required folders..."
+          for d in Game Code Docs .github; do
+            [ -d "$d" ] || echo "Missing: $d"
+          done
+          bash scripts/validate_repo.sh || true
+      - name: Placeholder tests
+        run: echo "Replace with Unity tests later (GameCI)."
+
+# TODO: Add GameCI unity-test-runner and unity-builder once UNITY_LICENSE is added as a repo secret.
+
+
