@@ -23,10 +23,10 @@ namespace LowPolySurvival.Game.Core.Voxel
 			if (meshCollider == null) meshCollider = gameObject.AddComponent<MeshCollider>();
 			if (material == null)
 			{
-				var shader = Shader.Find("Universal Render Pipeline/Lit");
-				if (shader == null) shader = Shader.Find("Standard");
+				var shader = Shader.Find("Universal Render Pipeline/Unlit");
+				if (shader == null) shader = Shader.Find("Unlit/Color");
 				material = new Material(shader);
-				material.color = new Color(0.35f, 0.65f, 0.35f, 1f);
+				material.color = new Color(0.35f, 0.85f, 0.35f, 1f);
 			}
 			meshRenderer.sharedMaterial = material;
 		}
@@ -87,6 +87,7 @@ namespace LowPolySurvival.Game.Core.Voxel
 			meshFilter.sharedMesh = mesh;
 			if (meshCollider != null) meshCollider.sharedMesh = null; // force refresh
 			if (meshCollider != null) meshCollider.sharedMesh = mesh;
+			Debug.Log($"VoxelChunk rebuilt: verts={verts.Count} tris={tris.Count/3} mat={(meshRenderer!=null && meshRenderer.sharedMaterial!=null)}");
 		}
 	}
 }

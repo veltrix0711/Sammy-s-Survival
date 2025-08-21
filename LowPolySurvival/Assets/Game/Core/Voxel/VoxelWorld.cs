@@ -25,6 +25,7 @@ namespace LowPolySurvival.Game.Core.Voxel
 			{
 				var go = new GameObject("Chunk_0_0");
 				go.transform.SetParent(transform);
+				go.transform.position = Vector3.zero;
 				chunk = go.AddComponent<VoxelChunk>();
 				chunk.Initialize(new Vector3Int(Mathf.Max(4, chunkDimensions.x), Mathf.Max(8, chunkDimensions.y/4), Mathf.Max(4, chunkDimensions.z)), voxelSize);
 				chunk.GenerateFlatFill(Mathf.Max(2, Mathf.Min(6, chunkDimensions.y/8)));
