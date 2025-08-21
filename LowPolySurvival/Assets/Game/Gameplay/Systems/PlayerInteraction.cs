@@ -3,37 +3,34 @@ using LowPolySurvival.Game.Gameplay.Data;
 
 namespace LowPolySurvival.Game.Gameplay.Systems
 {
+	[DefaultExecutionOrder(200)]
 	public sealed class PlayerInteraction : MonoBehaviour
 	{
 		[SerializeField] private InventorySystem inventory;
 		[SerializeField] private DemoClothBandage clothBandage;
 		[SerializeField] private ItemDefinition clothDef;
 		[SerializeField] private float interactRange = 6f;
+		[SerializeField] private LayerMask raycastMask = ~0;
 
 		private Camera cam;
 
 		private void Awake()
 		{
 			cam = Camera.main;
-			if (cam == null)
-			{
-				var camGo = new GameObject("Main Camera");
-				cam = camGo.AddComponent<Camera>();
-				cam.tag = "MainCamera";
-				cam.transform.position = transform.position + new Vector3(0, 1.7f, -4f);
-				cam.transform.LookAt(transform.position + Vector3.forward * 5f);
-			}
 		}
 
 		private void Update()
 		{
+			if (cam == null) cam = Camera.main;
 			if (Input.GetKeyDown(KeyCode.E))
 			{
+				Debug.Log("Pressed E: Craft Bandage");
 				clothBandage?.TryMakeBandage();
 			}
 
 			if (Input.GetKeyDown(KeyCode.X))
 			{
+				Debug.Log("Pressed X: TryCut");
 				TryCut();
 			}
 		}
@@ -42,7 +39,8 @@ namespace LowPolySurvival.Game.Gameplay.Systems
 		{
 			if (cam == null || inventory == null || clothDef == null) return;
 			var ray = cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
-			if (Physics.Raycast(ray, out var hit, interactRange))
+			Debug.DrawRay(ray.origin, ray.direction * interactRange, Color.cyan, 0.25f);
+			if (Physics.Raycast(ray, out var hit, interactRange, raycastMask, QueryTriggerInteraction.Ignore))
 			{
 				var t = hit.collider != null ? hit.collider.transform : null;
 				var src = t != null ? t.GetComponentInParent<ClothSource>() : null;

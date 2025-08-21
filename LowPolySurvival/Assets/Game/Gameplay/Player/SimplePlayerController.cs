@@ -3,6 +3,7 @@ using UnityEngine;
 namespace LowPolySurvival.Game.Gameplay.Player
 {
 	[RequireComponent(typeof(CharacterController))]
+	[DefaultExecutionOrder(100)]
 	public sealed class SimplePlayerController : MonoBehaviour
 	{
 		[SerializeField] private float moveSpeed = 4f;
@@ -17,6 +18,9 @@ namespace LowPolySurvival.Game.Gameplay.Player
 		private void Awake()
 		{
 			controller = GetComponent<CharacterController>();
+			if (controller.height < 1.5f) controller.height = 1.8f;
+			if (controller.radius < 0.3f) controller.radius = 0.35f;
+			if (Mathf.Abs(controller.center.y) < 0.01f) controller.center = new Vector3(0, 0.9f, 0);
 			if (playerCamera == null)
 			{
 				var camGo = new GameObject("PlayerCamera");
@@ -47,6 +51,7 @@ namespace LowPolySurvival.Game.Gameplay.Player
 			velocity.z = world.z;
 			velocity.y += gravity * Time.deltaTime;
 			controller.Move(velocity * Time.deltaTime);
+			if (controller.isGrounded && velocity.y < 0) velocity.y = -2f;
 		}
 	}
 }
