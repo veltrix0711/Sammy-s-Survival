@@ -8,6 +8,7 @@ public class ChunkPainterWindow : EditorWindow
 	private int chunkX = 0, chunkY = 0;
 	private int size = 16;
 	private float tileScale = 1f;
+	private Material assignMaterial;
 	
 	[MenuItem("Tools/Chunk Painter")] 
 	public static void Open() => GetWindow<ChunkPainterWindow>("Chunk Painter");
@@ -21,6 +22,7 @@ public class ChunkPainterWindow : EditorWindow
 		EditorGUILayout.EndHorizontal();
 		size = EditorGUILayout.IntSlider("Size", size, 8, 64);
 		tileScale = EditorGUILayout.Slider("Tile Scale", tileScale, 0.25f, 2f);
+		assignMaterial = (Material)EditorGUILayout.ObjectField("Assign Material", assignMaterial, typeof(Material), false);
 		if (GUILayout.Button("Open/Create Chunk Scene"))
 		{
 			OpenOrCreateChunk();
@@ -28,6 +30,10 @@ public class ChunkPainterWindow : EditorWindow
 		if (GUILayout.Button("Paint Debug Grid"))
 		{
 			PaintGrid();
+		}
+		if (GUILayout.Button("Create Static Voxel Chunk (Editor)"))
+		{
+			CreateStaticChunk();
 		}
 	}
 
@@ -68,5 +74,20 @@ public class ChunkPainterWindow : EditorWindow
 			}
 		}
 		EditorUtility.SetDirty(parent);
+	}
+
+	private void CreateStaticChunk()
+	{
+		var go = new GameObject("StaticChunk");
+		var chunk = go.AddComponent<LowPolySurvival.Game.Core.Voxel.VoxelChunk>();
+		chunk.Initialize(new Vector3Int(16, 8, 16), 1f);
+		chunk.GenerateFlatFill(1);
+		chunk.RebuildMesh();
+		if (assignMaterial != null)
+		{
+			var mr = go.GetComponent<MeshRenderer>();
+			mr.sharedMaterial = assignMaterial;
+		}
+		Selection.activeGameObject = go;
 	}
 }

@@ -8,6 +8,7 @@ namespace LowPolySurvival.Game.Core.Voxel
 		[SerializeField] private Vector3Int chunkDimensions = new Vector3Int(16, 128, 16);
 		[SerializeField] private int viewDistanceChunks = 6;
         [SerializeField] private float voxelSize = 1f;
+        [SerializeField] private bool generateOnPlay = true;
         private VoxelChunk chunk;
 
 		public Vector3Int ChunkDimensions => chunkDimensions;
@@ -15,10 +16,13 @@ namespace LowPolySurvival.Game.Core.Voxel
 
 		private void Awake()
 		{
-			InitializeWorldIfNeeded();
+			if (generateOnPlay)
+			{
+				BuildDemoChunkIfEmpty();
+			}
 		}
 
-		private void InitializeWorldIfNeeded()
+		public void BuildDemoChunkIfEmpty()
 		{
 			// For demo, create one chunk and flat-fill
 			if (chunk == null)
@@ -72,5 +76,7 @@ namespace LowPolySurvival.Game.Core.Voxel
 			}
 			chunk.RebuildMesh();
 		}
+
+		public VoxelChunk GetChunk() => chunk;
 	}
 }
