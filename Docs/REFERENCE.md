@@ -101,3 +101,4 @@ This section is the single source of truth for project alignment. All major chan
 - persistence: containers added (identified savables), GameState saves scene containers; chunk painter tool for grid chunks
 - crafting: benches added (speed/quality multipliers), CraftingSystem accepts bench context
 - ui: minimal Container UI to transfer items between player and container
+- crafting: wired inventory consumption/production; nearby bench search; added Recipe UI to trigger crafting
