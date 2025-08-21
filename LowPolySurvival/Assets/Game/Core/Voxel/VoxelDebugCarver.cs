@@ -4,30 +4,33 @@ namespace LowPolySurvival.Game.Core.Voxel
 {
 	public sealed class VoxelDebugCarver : MonoBehaviour
 	{
-		[SerializeField] private float radius = 0.5f;
+		[SerializeField] private VoxelWorld world;
+		[SerializeField] private float radius = 0.75f;
 		[SerializeField] private LayerMask terrainMask = ~0;
 		private Camera cam;
 
 		private void Awake()
 		{
 			cam = Camera.main;
+			if (world == null) world = FindObjectOfType<VoxelWorld>();
 		}
 
 		private void Update()
 		{
-			if (cam == null) return;
+			if (cam == null) cam = Camera.main;
+			if (cam == null || world == null) return;
 			var ray = cam.ScreenPointToRay(Input.mousePosition);
 			if (Physics.Raycast(ray, out var hit, 100f, terrainMask))
 			{
 				if (Input.GetMouseButtonDown(0))
 				{
-					// TODO: call into VoxelWorld.DigAt
-					Debug.DrawRay(hit.point, Vector3.up, Color.red, 1f);
+					world.DigAt(hit.point, radius);
+					Debug.DrawRay(hit.point, Vector3.up, Color.red, 0.5f);
 				}
 				if (Input.GetMouseButtonDown(1))
 				{
-					// TODO: call into VoxelWorld.PlaceAt
-					Debug.DrawRay(hit.point, Vector3.up, Color.green, 1f);
+					world.PlaceAt(hit.point, radius);
+					Debug.DrawRay(hit.point, Vector3.up, Color.green, 0.5f);
 				}
 			}
 		}
