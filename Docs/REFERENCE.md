@@ -97,3 +97,4 @@ This section is the single source of truth for project alignment. All major chan
 - commit: 9bbffab
 - remote: https://github.com/veltrix0711/Sammy-s-Survival.git
 - unity setup end: 2025-08-21T14:32:42
+- tools: added advanced Item/Recipe Designer (items, addons, recipes, registry sync, prefab helper, backups) @ Tools → Item & Recipe Designer
