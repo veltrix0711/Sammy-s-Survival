@@ -108,7 +108,7 @@ namespace LowPolySurvival.Game.Core.Voxel
 				for (int x=0;x<size;x++)
 				{
 					bool c = ((x/4)+(y/4)) % 2 == 0;
-					ex.SetPixel(x,y, c ? new Color(0.55f,0.75f,0.55f,1f) : new Color(0.45f,0.65f,0.45f,1f));
+					tex.SetPixel(x,y, c ? new Color(0.55f,0.75f,0.55f,1f) : new Color(0.45f,0.65f,0.45f,1f));
 				}
 			}
 			tex.Apply();
