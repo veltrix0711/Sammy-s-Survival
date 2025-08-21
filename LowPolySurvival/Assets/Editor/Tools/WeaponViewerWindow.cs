@@ -10,12 +10,20 @@ public class WeaponViewerWindow : EditorWindow
 	private GameObject weaponInstance;
 	private Vector2 scroll;
 
+	// Animation preview
+	private AnimationClip[] clips;
+	private int clipIndex;
+	private bool playing;
+	private float playhead;
+	private double lastTime;
+
 	[MenuItem("Tools/Weapon Viewer")] 
 	public static void Open() => GetWindow<WeaponViewerWindow>("Weapon Viewer");
 
 	private void OnDisable()
 	{
 		Cleanup();
+		AnimationMode.StopAnimationMode();
 	}
 
 	private void Cleanup()
@@ -32,7 +40,14 @@ public class WeaponViewerWindow : EditorWindow
 			LoadWeapon();
 		}
 		EditorGUILayout.Space(6);
-		if (weapon != null) DrawSlotsUI();
+		if (weapon != null)
+		{
+			DrawSlotsUI();
+			EditorGUILayout.Space(6);
+			DrawAnimationUI();
+		}
+
+		if (playing) Repaint();
 	}
 
 	private void LoadWeapon()
@@ -46,6 +61,16 @@ public class WeaponViewerWindow : EditorWindow
 			weaponInstance.transform.localPosition = Vector3.zero;
 			weaponInstance.transform.localRotation = Quaternion.identity;
 		}
+		// Load clips
+		clips = null;
+		clipIndex = 0;
+		playing = false;
+		playhead = 0f;
+		if (weapon.AnimatorController != null)
+		{
+			clips = weapon.AnimatorController.animationClips;
+		}
+		AnimationMode.StopAnimationMode();
 	}
 
 	private void DrawSlotsUI()
@@ -76,6 +101,43 @@ public class WeaponViewerWindow : EditorWindow
 		HandleAddonDrop(dropArea);
 	}
 
+	private void DrawAnimationUI()
+	{
+		EditorGUILayout.LabelField("Animation Preview", EditorStyles.boldLabel);
+		if (clips == null || clips.Length == 0)
+		{
+			EditorGUILayout.HelpBox("No clips available. Assign an AnimatorController on the WeaponDefinition.", MessageType.Info);
+			return;
+		}
+		string[] names = clips.Select(c => c != null ? c.name : "<null>").ToArray();
+		clipIndex = EditorGUILayout.Popup("Clip", clipIndex, names);
+		var clip = clips[clipIndex];
+		EditorGUILayout.BeginHorizontal();
+		if (GUILayout.Button(playing ? "Pause" : "Play", GUILayout.Width(80)))
+		{
+			playing = !playing;
+			lastTime = EditorApplication.timeSinceStartup;
+			if (playing) AnimationMode.StartAnimationMode(); else AnimationMode.StopAnimationMode();
+		}
+		if (GUILayout.Button("Stop", GUILayout.Width(80)))
+		{
+			playing = false; playhead = 0f; AnimationMode.StopAnimationMode();
+		}
+		EditorGUILayout.EndHorizontal();
+		playhead = EditorGUILayout.Slider("Time", playhead, 0f, clip.length);
+		if (weaponInstance != null && clip != null)
+		{
+			if (playing)
+			{
+				double now = EditorApplication.timeSinceStartup;
+				double dt = now - lastTime; lastTime = now;
+				playhead += (float)dt;
+				if (playhead > clip.length) playhead = 0f;
+			}
+			AnimationMode.SampleAnimationClip(weaponInstance, clip, playhead);
+		}
+	}
+
 	private void SelectMount(string mountName)
 	{
 		if (weaponInstance == null) return;
@@ -88,8 +150,11 @@ public class WeaponViewerWindow : EditorWindow
 		if (weaponInstance == null) return;
 		var mount = weaponInstance.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == mountName);
 		if (mount == null) return;
-		var toRemove = mount.Cast<Transform>().Where(c => c != mount).ToList();
-		foreach (var c in toRemove) DestroyImmediate(c.gameObject);
+		for (int i = mount.childCount - 1; i >= 0; i--)
+		{
+			var c = mount.GetChild(i);
+			DestroyImmediate(c.gameObject);
+		}
 	}
 
 	private void HandleAddonDrop(Rect dropArea)
