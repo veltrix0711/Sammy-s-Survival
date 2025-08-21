@@ -99,3 +99,5 @@ This section is the single source of truth for project alignment. All major chan
 - unity setup end: 2025-08-21T14:32:42
 - tools: added advanced Item/Recipe Designer (items, addons, recipes, registry sync, prefab helper, backups) @ Tools → Item & Recipe Designer
 - persistence: containers added (identified savables), GameState saves scene containers; chunk painter tool for grid chunks
+- crafting: benches added (speed/quality multipliers), CraftingSystem accepts bench context
+- ui: minimal Container UI to transfer items between player and container
