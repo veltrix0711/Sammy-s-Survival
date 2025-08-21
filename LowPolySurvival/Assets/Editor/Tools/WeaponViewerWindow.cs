@@ -17,6 +17,9 @@ public class WeaponViewerWindow : EditorWindow
 	private Vector3 editPos;
 	private Vector3 editEuler;
 	private Vector3 editScale = Vector3.one;
+	private bool sceneHandles = true;
+	private string variantId = "";
+	private string variantName = "";
 
 	// Animation preview
 	private AnimationClip[] clips;
@@ -375,11 +378,17 @@ public class WeaponViewerWindow : EditorWindow
 		if (GUILayout.Button("Clear All Attachments", GUILayout.Height(24))) { ClearAllAttachments(); }
 		if (GUILayout.Button("Save As Prefab Variant", GUILayout.Height(24))) { SaveVariant(); }
 		EditorGUILayout.EndHorizontal();
+		EditorGUILayout.Space(4);
+		EditorGUILayout.LabelField("Create WeaponDefinition Variant", EditorStyles.boldLabel);
+		variantId = EditorGUILayout.TextField("Variant Id", variantId);
+		variantName = EditorGUILayout.TextField("Variant Name", variantName);
+		if (GUILayout.Button("Create WeaponDefinition Variant")) { CreateWeaponDefinitionVariant(); }
 	}
 
 	private void DrawAttachmentEditor()
 	{
 		EditorGUILayout.LabelField("Attachment Editor", EditorStyles.boldLabel);
+		sceneHandles = EditorGUILayout.Toggle("Scene Handles", sceneHandles);
 		if (selectedMount == null)
 		{
 			EditorGUILayout.HelpBox("Select a mount (Select button) to edit attached addon transforms.", MessageType.Info);
@@ -419,6 +428,29 @@ public class WeaponViewerWindow : EditorWindow
 		}
 	}
 
+	private void OnSceneGUI(SceneView sv)
+	{
+		if (!sceneHandles) return;
+		if (selectedAddonMarker == null) return;
+		var tr = selectedAddonMarker.transform;
+		EditorGUI.BeginChangeCheck();
+		Vector3 worldPos = tr.position;
+		Quaternion worldRot = tr.rotation;
+		worldPos = Handles.PositionHandle(worldPos, worldRot);
+		worldRot = Handles.RotationHandle(worldRot, worldPos);
+		float uniformScale = Handles.ScaleValueHandle(tr.localScale.x, worldPos, worldRot, HandleUtility.GetHandleSize(worldPos), Handles.CubeHandleCap, 0.1f);
+		if (EditorGUI.EndChangeCheck())
+		{
+			Undo.RecordObject(tr, "Move Addon (Handles)");
+			tr.position = worldPos;
+			tr.rotation = worldRot;
+			tr.localScale = new Vector3(uniformScale, uniformScale, uniformScale);
+			editPos = tr.localPosition;
+			editEuler = tr.localEulerAngles;
+			editScale = tr.localScale;
+		}
+	}
+
 	private void ClearAllAttachments()
 	{
 		if (weaponInstance == null) return;
@@ -443,5 +475,61 @@ public class WeaponViewerWindow : EditorWindow
 		{
 			EditorUtility.DisplayDialog("Saved", path, "OK");
 		}
+	}
+
+	private GameObject SaveVariantPrefab()
+	{
+		if (weaponInstance == null || weapon == null) return null;
+		if (!AssetDatabase.IsValidFolder(variantsFolder))
+		{
+			Directory.CreateDirectory(variantsFolder);
+			AssetDatabase.Refresh();
+		}
+		string name = weapon.DisplayName + "_Variant";
+		string path = AssetDatabase.GenerateUniqueAssetPath(Path.Combine(variantsFolder, name + ".prefab"));
+		return PrefabUtility.SaveAsPrefabAsset(weaponInstance, path);
+	}
+
+	private void CreateWeaponDefinitionVariant()
+	{
+		var prefab = SaveVariantPrefab();
+		if (prefab == null)
+		{
+			EditorUtility.DisplayDialog("Save Variant First", "Failed to save prefab variant.", "OK");
+			return;
+		}
+		string weaponsVariantsFolder = "Assets/Content/ScriptableObjects/Weapons/Variants";
+		if (!AssetDatabase.IsValidFolder(weaponsVariantsFolder))
+		{
+			Directory.CreateDirectory(weaponsVariantsFolder);
+			AssetDatabase.Refresh();
+		}
+		string id = string.IsNullOrWhiteSpace(variantId) ? weapon.WeaponId + ".variant" : variantId;
+		string disp = string.IsNullOrWhiteSpace(variantName) ? weapon.DisplayName + " Variant" : variantName;
+		string assetPath = AssetDatabase.GenerateUniqueAssetPath(Path.Combine(weaponsVariantsFolder, disp + ".asset"));
+		var def = ScriptableObject.CreateInstance<WeaponDefinition>();
+		AssetDatabase.CreateAsset(def, assetPath);
+		var so = new SerializedObject(def);
+		so.FindProperty("weaponId").stringValue = id;
+		so.FindProperty("displayName").stringValue = disp;
+		so.FindProperty("baseDamage").floatValue = weapon.BaseDamage;
+		so.FindProperty("fireRate").floatValue = weapon.FireRate;
+		so.FindProperty("recoil").floatValue = weapon.Recoil;
+		so.FindProperty("spread").floatValue = weapon.Spread;
+		so.FindProperty("baseWeightKg").floatValue = weapon.BaseWeightKg;
+		so.FindProperty("weaponPrefab").objectReferenceValue = prefab;
+		so.FindProperty("animatorController").objectReferenceValue = weapon.AnimatorController;
+		var slotsProp = so.FindProperty("slots");
+		slotsProp.arraySize = weapon.Slots != null ? weapon.Slots.Length : 0;
+		for (int i = 0; i < slotsProp.arraySize; i++)
+		{
+			slotsProp.GetArrayElementAtIndex(i).FindPropertyRelative("slotType").stringValue = weapon.Slots[i].slotType;
+			slotsProp.GetArrayElementAtIndex(i).FindPropertyRelative("mountPointName").stringValue = weapon.Slots[i].mountPointName;
+		}
+		so.ApplyModifiedPropertiesWithoutUndo();
+		EditorUtility.SetDirty(def);
+		AssetDatabase.SaveAssets();
+		Selection.activeObject = def;
+		EditorUtility.DisplayDialog("WeaponDefinition Variant Created", assetPath, "OK");
 	}
 }
