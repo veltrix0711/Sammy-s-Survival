@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using UnityEditor;
-using UnityEditor.Rendering;
 using UnityEngine;
 
 public static class ConfigureURP
@@ -13,8 +12,8 @@ public static class ConfigureURP
 			var type = Type.GetType("UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset, Unity.RenderPipelines.Universal.Runtime");
 			if (type == null)
 			{
-				Debug.LogError("URP type not found; ensure package installed");
-				EditorApplication.Exit(0);
+				UnityEngine.Debug.LogError("URP type not found; ensure package installed");
+				UnityEditor.EditorApplication.Exit(2);
 				return;
 			}
 			var settingsDir = "Assets/Settings";
@@ -22,11 +21,11 @@ public static class ConfigureURP
 			{
 				AssetDatabase.CreateFolder("Assets", "Settings");
 			}
-			var asset = ScriptableObject.CreateInstance(type) as RenderPipelineAsset;
+			var asset = ScriptableObject.CreateInstance(type) as UnityEngine.Rendering.RenderPipelineAsset;
 			if (asset == null)
 			{
-				Debug.LogError("Failed to create URP asset instance");
-				EditorApplication.Exit(1);
+				UnityEngine.Debug.LogError("Failed to create URP asset instance");
+				UnityEditor.EditorApplication.Exit(3);
 				return;
 			}
 			var assetPath = Path.Combine(settingsDir, "URP-Pipeline.asset").Replace('\\','/');
@@ -34,20 +33,16 @@ public static class ConfigureURP
 			{
 				AssetDatabase.CreateAsset(asset, assetPath);
 			}
-			GraphicsSettings.defaultRenderPipeline = asset;
-			for (int i = 0; i < QualitySettings.names.Length; i++)
-			{
-				QualitySettings.SetQualityLevel(i, false);
-				QualitySettings.renderPipeline = asset;
-			}
+			UnityEngine.Rendering.GraphicsSettings.defaultRenderPipeline = asset;
+			UnityEngine.QualitySettings.renderPipeline = asset;
 			AssetDatabase.SaveAssets();
-			Debug.Log("URP configured and assigned.");
-			EditorApplication.Exit(0);
+			UnityEngine.Debug.Log("URP configured and assigned.");
+			UnityEditor.EditorApplication.Exit(0);
 		}
 		catch (Exception ex)
 		{
-			Debug.LogError(ex);
-			EditorApplication.Exit(1);
+			UnityEngine.Debug.LogError(ex);
+			UnityEditor.EditorApplication.Exit(4);
 		}
 	}
 }
