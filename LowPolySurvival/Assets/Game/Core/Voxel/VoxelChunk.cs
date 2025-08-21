@@ -9,6 +9,8 @@ namespace LowPolySurvival.Game.Core.Voxel
 		[SerializeField] private float voxelSize = 1f;
 		[SerializeField] private MeshFilter meshFilter;
 		[SerializeField] private MeshRenderer meshRenderer;
+		[SerializeField] private MeshCollider meshCollider;
+		[SerializeField] private Material material;
 
 		private bool[,,] solid;
 
@@ -18,6 +20,15 @@ namespace LowPolySurvival.Game.Core.Voxel
 			solid = new bool[dims.x, dims.y, dims.z];
 			if (meshFilter == null) meshFilter = gameObject.AddComponent<MeshFilter>();
 			if (meshRenderer == null) meshRenderer = gameObject.AddComponent<MeshRenderer>();
+			if (meshCollider == null) meshCollider = gameObject.AddComponent<MeshCollider>();
+			if (material == null)
+			{
+				var shader = Shader.Find("Universal Render Pipeline/Lit");
+				if (shader == null) shader = Shader.Find("Standard");
+				material = new Material(shader);
+				material.color = new Color(0.35f, 0.65f, 0.35f, 1f);
+			}
+			meshRenderer.sharedMaterial = material;
 		}
 
 		public void SetSolid(int x, int y, int z, bool value)
@@ -74,6 +85,8 @@ namespace LowPolySurvival.Game.Core.Voxel
 			mesh.SetTriangles(tris, 0);
 			mesh.RecalculateBounds();
 			meshFilter.sharedMesh = mesh;
+			if (meshCollider != null) meshCollider.sharedMesh = null; // force refresh
+			if (meshCollider != null) meshCollider.sharedMesh = mesh;
 		}
 	}
 }

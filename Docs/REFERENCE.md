@@ -106,3 +106,4 @@ This section is the single source of truth for project alignment. All major chan
 - tools: Weapon Viewer added (preview weapon prefab, select mounts, drag-and-drop addon attach/detach preview)
 - tools: Weapon Viewer now supports animation clip preview (play/pause/scrub)
 - voxel: initial chunk, flat fill, dig/place sphere carve, naive top-face mesh
+- voxel tip: ensure VoxelWorld is at (0,0,0); a green chunk should appear. Add VoxelDebugCarver to Player for dig/place.
