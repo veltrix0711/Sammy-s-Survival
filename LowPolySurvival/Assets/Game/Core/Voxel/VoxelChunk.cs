@@ -23,12 +23,16 @@ namespace LowPolySurvival.Game.Core.Voxel
 			if (meshCollider == null) meshCollider = gameObject.AddComponent<MeshCollider>();
 			if (material == null)
 			{
-				var shader = Shader.Find("Universal Render Pipeline/Unlit");
-				if (shader == null) shader = Shader.Find("Unlit/Color");
+				var shader = Shader.Find("Universal Render Pipeline/Lit");
+				if (shader == null) shader = Shader.Find("Standard");
 				material = new Material(shader);
-				material.color = new Color(0.35f, 0.85f, 0.35f, 1f);
+				material.SetColor("_BaseColor", new Color(0.6f, 0.8f, 0.6f, 1f));
+				var tex = CreateCheckerTexture(32);
+				material.SetTexture("_BaseMap", tex);
+				material.SetTextureScale("_BaseMap", new Vector2(4,4));
 			}
 			meshRenderer.sharedMaterial = material;
+			gameObject.layer = LayerMask.NameToLayer("Default");
 		}
 
 		public void SetSolid(int x, int y, int z, bool value)
@@ -92,6 +96,23 @@ namespace LowPolySurvival.Game.Core.Voxel
 			if (meshCollider != null) meshCollider.sharedMesh = null; // force refresh
 			if (meshCollider != null) meshCollider.sharedMesh = mesh;
 			Debug.Log($"VoxelChunk rebuilt: verts={verts.Count} tris={tris.Count/3} mat={(meshRenderer!=null && meshRenderer.sharedMaterial!=null)}");
+		}
+
+		private Texture2D CreateCheckerTexture(int size)
+		{
+			var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+			tex.wrapMode = TextureWrapMode.Repeat;
+			tex.filterMode = FilterMode.Point;
+			for (int y=0;y<size;y++)
+			{
+				for (int x=0;x<size;x++)
+				{
+					bool c = ((x/4)+(y/4)) % 2 == 0;
+					ex.SetPixel(x,y, c ? new Color(0.55f,0.75f,0.55f,1f) : new Color(0.45f,0.65f,0.45f,1f));
+				}
+			}
+			tex.Apply();
+			return tex;
 		}
 
 		private static void AddQuad(List<Vector3> v, List<int> t, List<Vector3> n, List<Vector2> u,

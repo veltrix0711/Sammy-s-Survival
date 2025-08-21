@@ -109,3 +109,5 @@ This section is the single source of truth for project alignment. All major chan
 - voxel tip: ensure VoxelWorld is at (0,0,0); a green chunk should appear. Add VoxelDebugCarver to Player for dig/place.
 - voxel tip: during Play, select `Chunk_0_0` and press F in Scene view to frame it; align Game view to see the platform
 - voxel tip: add VoxelDebugCarver to Player, set World reference (or it auto-finds), LMB=dig, RMB=place
+- voxel contrast: applied checker texture on lit material for depth cues; chunk has MeshCollider for grounding
+- player: adjusted CharacterController movement to ensure proper grounding and gravity

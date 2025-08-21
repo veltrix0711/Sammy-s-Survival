@@ -50,7 +50,8 @@ namespace LowPolySurvival.Game.Gameplay.Player
 			velocity.x = world.x;
 			velocity.z = world.z;
 			velocity.y += gravity * Time.deltaTime;
-			controller.Move(velocity * Time.deltaTime);
+			var move = new Vector3(velocity.x, velocity.y, velocity.z) * Time.deltaTime;
+			controller.Move(move);
 			if (controller.isGrounded && velocity.y < 0) velocity.y = -2f;
 		}
 	}
