@@ -8,6 +8,7 @@ namespace LowPolySurvival.Game.Gameplay.Systems
 	public sealed class InventorySystemSavable : MonoBehaviour, ISavable
 	{
 		[SerializeField] private InventorySystem inventory;
+
 		[System.Serializable]
 		private class Entry { public string itemId; public int count; }
 		[System.Serializable]
@@ -16,14 +17,27 @@ namespace LowPolySurvival.Game.Gameplay.Systems
 		public string SaveToJson()
 		{
 			var model = new SaveModel();
-			// TODO: replace with real iteration of InventorySystem storage
+			foreach (var kv in inventory.DebugEnumerate())
+			{
+				var def = kv.Key;
+				if (def == null) continue;
+				model.items.Add(new Entry { itemId = def.ItemId, count = kv.Value });
+			}
 			return JsonUtility.ToJson(model);
 		}
 
 		public void LoadFromJson(string json)
 		{
 			var model = string.IsNullOrEmpty(json) ? new SaveModel() : JsonUtility.FromJson<SaveModel>(json);
-			// TODO: clear and rebuild inventory from model using a definition registry
+			inventory.DebugClear();
+			var registry = ItemRegistry.Load();
+			if (registry == null) return;
+			foreach (var e in model.items)
+			{
+				var def = registry.GetById(e.itemId);
+				if (def != null && e.count > 0)
+					inventory.Add(def, e.count);
+			}
 		}
 	}
 }

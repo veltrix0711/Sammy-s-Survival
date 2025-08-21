@@ -32,6 +32,23 @@ public static class SetupDemoScene
 		});
 		AssetDatabase.SaveAssets();
 
+		// Ensure ItemRegistry in Resources
+		EnsureFolder("Assets/Resources");
+		var regPath = "Assets/Resources/ItemRegistry.asset";
+		var registry = AssetDatabase.LoadAssetAtPath<ItemRegistry>(regPath);
+		if (registry == null)
+		{
+			registry = ScriptableObject.CreateInstance<ItemRegistry>();
+			AssetDatabase.CreateAsset(registry, regPath);
+		}
+		var soReg = new SerializedObject(registry);
+		var itemsProp = soReg.FindProperty("items");
+		itemsProp.arraySize = 2;
+		itemsProp.GetArrayElementAtIndex(0).objectReferenceValue = cloth;
+		itemsProp.GetArrayElementAtIndex(1).objectReferenceValue = bandage;
+		soReg.ApplyModifiedPropertiesWithoutUndo();
+		EditorUtility.SetDirty(registry);
+
 		// Open Safehouse scene
 		var scenePath = "Assets/Scenes/POI/Safehouse.unity";
 		if (!File.Exists(scenePath))

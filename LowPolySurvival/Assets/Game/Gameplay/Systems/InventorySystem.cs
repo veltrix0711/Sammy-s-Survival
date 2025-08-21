@@ -29,5 +29,16 @@ namespace LowPolySurvival.Game.Gameplay.Systems
 			if (left == 0) itemToCount.Remove(item); else itemToCount[item] = left;
 			return true;
 		}
+
+		// Debug/Save helpers
+		public IEnumerable<KeyValuePair<ItemDefinition, int>> DebugEnumerate()
+		{
+			return itemToCount;
+		}
+
+		public void DebugClear()
+		{
+			itemToCount.Clear();
+		}
 	}
 }
