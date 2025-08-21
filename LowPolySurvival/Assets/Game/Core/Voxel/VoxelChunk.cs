@@ -65,7 +65,7 @@ namespace LowPolySurvival.Game.Core.Voxel
 				if (y+1>=dimensions.y || !solid[x,y+1,z])
 				{
 					int vi = verts.Count;
-					Vector3 basePos = new Vector3(x, y+1, z) * voxelSize;
+					Vector3 basePos = new Vector3(x * voxelSize, y * voxelSize, z * voxelSize);
 					verts.Add(basePos + new Vector3(0,0,0));
 					verts.Add(basePos + new Vector3(voxelSize,0,0));
 					verts.Add(basePos + new Vector3(voxelSize,0,voxelSize));

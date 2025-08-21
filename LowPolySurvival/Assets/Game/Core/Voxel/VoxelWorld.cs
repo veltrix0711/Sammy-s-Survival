@@ -28,7 +28,8 @@ namespace LowPolySurvival.Game.Core.Voxel
 				go.transform.position = Vector3.zero;
 				chunk = go.AddComponent<VoxelChunk>();
 				chunk.Initialize(new Vector3Int(Mathf.Max(4, chunkDimensions.x), Mathf.Max(8, chunkDimensions.y/4), Mathf.Max(4, chunkDimensions.z)), voxelSize);
-				chunk.GenerateFlatFill(Mathf.Max(2, Mathf.Min(6, chunkDimensions.y/8)));
+				// Make a shallow platform near ground for visibility
+				chunk.GenerateFlatFill(1);
 				chunk.RebuildMesh();
 			}
 		}

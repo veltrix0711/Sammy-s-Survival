@@ -107,3 +107,4 @@ This section is the single source of truth for project alignment. All major chan
 - tools: Weapon Viewer now supports animation clip preview (play/pause/scrub)
 - voxel: initial chunk, flat fill, dig/place sphere carve, naive top-face mesh
 - voxel tip: ensure VoxelWorld is at (0,0,0); a green chunk should appear. Add VoxelDebugCarver to Player for dig/place.
+- voxel tip: during Play, select `Chunk_0_0` and press F in Scene view to frame it; align Game view to see the platform
