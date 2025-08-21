@@ -103,7 +103,7 @@ public class ChunkPainterWindow : EditorWindow
 		plane.name = "Ground_Plane_10x10";
 		plane.transform.position = Vector3.zero;
 		var col = plane.GetComponent<MeshCollider>();
-		if (col != null) { col.convex = false; col.inflateMesh = true; }
+		if (col != null) { col.convex = false; }
 		Selection.activeGameObject = plane;
 	}
 }
