@@ -18,6 +18,10 @@ public static class ApplyProjectSettings
 		EnsureFolder("Assets/Scenes/World/Biomes/Temperate/Chunks");
 		EnsureFolder("Assets/Scenes/POI");
 		EnsureFolder("Assets/Settings");
+		EnsureFolder("Assets/Game");
+		EnsureFolder("Assets/Content/ScriptableObjects");
+		EnsureFolder("Assets/Content/Prefabs");
+		EnsureFolder("Assets/Content/Scenes");
 
 		// Create placeholder scenes if missing
 		CreateSceneIfMissing("Assets/Scenes/World/Master.unity");
