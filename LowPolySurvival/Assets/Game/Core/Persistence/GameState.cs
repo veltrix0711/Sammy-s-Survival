@@ -12,6 +12,7 @@ namespace LowPolySurvival.Game.Core.Persistence
 		private class SaveBundle
 		{
 			public Dictionary<string, string> subsystemJson = new Dictionary<string, string>();
+			public Dictionary<string, string> identifiedJson = new Dictionary<string, string>();
 		}
 
 		public void Save()
@@ -22,6 +23,15 @@ namespace LowPolySurvival.Game.Core.Persistence
 				if (mb is ISavable s)
 				{
 					bundle.subsystemJson[mb.GetType().FullName] = s.SaveToJson();
+				}
+			}
+			// Discover identified savables in scene
+			foreach (var idSav in FindObjectsOfType<MonoBehaviour>(true))
+			{
+				if (idSav is IIdentifiedSavable isv)
+				{
+					var key = isv.GetSaveKey();
+					if (!string.IsNullOrEmpty(key)) bundle.identifiedJson[key] = isv.SaveToJson();
 				}
 			}
 			var json = JsonUtility.ToJson(bundle);
@@ -38,6 +48,16 @@ namespace LowPolySurvival.Game.Core.Persistence
 				if (mb is ISavable s && bundle.subsystemJson.TryGetValue(mb.GetType().FullName, out var sub))
 				{
 					s.LoadFromJson(sub);
+				}
+			}
+			// Restore identified savables
+			foreach (var idSav in FindObjectsOfType<MonoBehaviour>(true))
+			{
+				if (idSav is IIdentifiedSavable isv)
+				{
+					var key = isv.GetSaveKey();
+					if (!string.IsNullOrEmpty(key) && bundle.identifiedJson.TryGetValue(key, out var j))
+						isv.LoadFromJson(j);
 				}
 			}
 		}
