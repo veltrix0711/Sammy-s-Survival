@@ -7,6 +7,8 @@ namespace LowPolySurvival.Game.Core.Voxel
 		[Header("World Settings")]
 		[SerializeField] private Vector3Int chunkDimensions = new Vector3Int(16, 128, 16);
 		[SerializeField] private int viewDistanceChunks = 6;
+        [SerializeField] private float voxelSize = 1f;
+        private VoxelChunk chunk;
 
 		public Vector3Int ChunkDimensions => chunkDimensions;
 		public int ViewDistanceChunks => viewDistanceChunks;
@@ -18,17 +20,55 @@ namespace LowPolySurvival.Game.Core.Voxel
 
 		private void InitializeWorldIfNeeded()
 		{
-			// TODO: Load or generate initial chunk set asynchronously
+			// For demo, create one chunk and flat-fill
+			if (chunk == null)
+			{
+				var go = new GameObject("Chunk_0_0");
+				go.transform.SetParent(transform);
+				chunk = go.AddComponent<VoxelChunk>();
+				chunk.Initialize(new Vector3Int(chunkDimensions.x, Mathf.Max(8, chunkDimensions.y/2), chunkDimensions.z), voxelSize);
+				chunk.GenerateFlatFill(8);
+				chunk.RebuildMesh();
+			}
 		}
 
 		public void DigAt(Vector3 worldPosition, float radius)
 		{
-			// TODO: Modify voxel data and schedule mesh rebuild for affected chunks
+			if (chunk == null) return;
+			var dims = new Vector3Int(chunkDimensions.x, Mathf.Max(8, chunkDimensions.y/2), chunkDimensions.z);
+			Vector3 local = worldPosition - chunk.transform.position;
+			int rx = Mathf.FloorToInt(local.x / voxelSize);
+			int ry = Mathf.FloorToInt(local.y / voxelSize);
+			int rz = Mathf.FloorToInt(local.z / voxelSize);
+			int r = Mathf.CeilToInt(radius / voxelSize);
+			for (int x=rx-r;x<=rx+r;x++)
+			for (int y=ry-r;y<=ry+r;y++)
+			for (int z=rz-r;z<=rz+r;z++)
+			{
+				if (!chunk.InBounds(x,y,z)) continue;
+				var p = new Vector3((x+0.5f)*voxelSize,(y+0.5f)*voxelSize,(z+0.5f)*voxelSize);
+				if ((p - local).sqrMagnitude <= radius*radius) chunk.SetSolid(x,y,z,false);
+			}
+			chunk.RebuildMesh();
 		}
 
 		public void PlaceAt(Vector3 worldPosition, float radius)
 		{
-			// TODO: Modify voxel data and schedule mesh rebuild for affected chunks
+			if (chunk == null) return;
+			Vector3 local = worldPosition - chunk.transform.position;
+			int rx = Mathf.FloorToInt(local.x / voxelSize);
+			int ry = Mathf.FloorToInt(local.y / voxelSize);
+			int rz = Mathf.FloorToInt(local.z / voxelSize);
+			int r = Mathf.CeilToInt(radius / voxelSize);
+			for (int x=rx-r;x<=rx+r;x++)
+			for (int y=ry-r;y<=ry+r;y++)
+			for (int z=rz-r;z<=rz+r;z++)
+			{
+				if (!chunk.InBounds(x,y,z)) continue;
+				var p = new Vector3((x+0.5f)*voxelSize,(y+0.5f)*voxelSize,(z+0.5f)*voxelSize);
+				if ((p - local).sqrMagnitude <= radius*radius) chunk.SetSolid(x,y,z,true);
+			}
+			chunk.RebuildMesh();
 		}
 	}
 }
