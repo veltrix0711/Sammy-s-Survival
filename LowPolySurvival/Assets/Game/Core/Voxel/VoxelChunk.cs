@@ -55,26 +55,30 @@ namespace LowPolySurvival.Game.Core.Voxel
 			var tris = new List<int>();
 			var norms = new List<Vector3>();
 			var uvs = new List<Vector2>();
-			// Simple naive meshing: add top faces only for brevity
 			for (int x=0;x<dimensions.x;x++)
 			for (int y=0;y<dimensions.y;y++)
 			for (int z=0;z<dimensions.z;z++)
 			{
 				if (!solid[x,y,z]) continue;
-				// top face if air above
-				if (y+1>=dimensions.y || !solid[x,y+1,z])
-				{
-					int vi = verts.Count;
-					Vector3 basePos = new Vector3(x * voxelSize, y * voxelSize, z * voxelSize);
-					verts.Add(basePos + new Vector3(0,0,0));
-					verts.Add(basePos + new Vector3(voxelSize,0,0));
-					verts.Add(basePos + new Vector3(voxelSize,0,voxelSize));
-					verts.Add(basePos + new Vector3(0,0,voxelSize));
-					norms.AddRange(new[]{Vector3.up,Vector3.up,Vector3.up,Vector3.up});
-					uvs.AddRange(new[]{new Vector2(0,0),new Vector2(1,0),new Vector2(1,1),new Vector2(0,1)});
-					tris.Add(vi+0); tris.Add(vi+2); tris.Add(vi+1);
-					tris.Add(vi+0); tris.Add(vi+3); tris.Add(vi+2);
-				}
+				Vector3 basePos = new Vector3(x * voxelSize, y * voxelSize, z * voxelSize);
+				// +Y (top)
+				if (y+1>=dimensions.y || !solid[x,y+1,z]) AddQuad(verts, tris, norms, uvs, basePos + new Vector3(0, voxelSize, 0),
+					new Vector3(voxelSize,0,0), new Vector3(0,0,voxelSize), Vector3.up);
+				// -Y (bottom)
+				if (y-1<0 || !solid[x,y-1,z]) AddQuad(verts, tris, norms, uvs, basePos,
+					new Vector3(0,0,voxelSize), new Vector3(voxelSize,0,0), Vector3.down);
+				// +X (right)
+				if (x+1>=dimensions.x || !solid[x+1,y,z]) AddQuad(verts, tris, norms, uvs, basePos + new Vector3(voxelSize,0,0),
+					new Vector3(0,0,voxelSize), new Vector3(0,voxelSize,0), Vector3.right);
+				// -X (left)
+				if (x-1<0 || !solid[x-1,y,z]) AddQuad(verts, tris, norms, uvs, basePos,
+					new Vector3(0,voxelSize,0), new Vector3(0,0,voxelSize), Vector3.left);
+				// +Z (forward)
+				if (z+1>=dimensions.z || !solid[x,y,z+1]) AddQuad(verts, tris, norms, uvs, basePos + new Vector3(0,0,voxelSize),
+					new Vector3(voxelSize,0,0), new Vector3(0,voxelSize,0), Vector3.forward);
+				// -Z (back)
+				if (z-1<0 || !solid[x,y,z-1]) AddQuad(verts, tris, norms, uvs, basePos,
+					new Vector3(0,0,voxelSize), new Vector3(voxelSize,0,0), Vector3.back);
 			}
 			var mesh = meshFilter.sharedMesh;
 			if (mesh == null) mesh = new Mesh(); else mesh.Clear();
@@ -88,6 +92,28 @@ namespace LowPolySurvival.Game.Core.Voxel
 			if (meshCollider != null) meshCollider.sharedMesh = null; // force refresh
 			if (meshCollider != null) meshCollider.sharedMesh = mesh;
 			Debug.Log($"VoxelChunk rebuilt: verts={verts.Count} tris={tris.Count/3} mat={(meshRenderer!=null && meshRenderer.sharedMaterial!=null)}");
+		}
+
+		private static void AddQuad(List<Vector3> v, List<int> t, List<Vector3> n, List<Vector2> u,
+			Vector3 origin, Vector3 axisU, Vector3 axisV, Vector3 normal)
+		{
+			int vi = v.Count;
+			v.Add(origin);
+			v.Add(origin + axisU);
+			v.Add(origin + axisU + axisV);
+			v.Add(origin + axisV);
+			n.AddRange(new[]{normal,normal,normal,normal});
+			u.AddRange(new[]{new Vector2(0,0),new Vector2(1,0),new Vector2(1,1),new Vector2(0,1)});
+			if (Vector3.Dot(Vector3.Cross(axisU, axisV), normal) >= 0)
+			{
+				t.Add(vi+0); t.Add(vi+2); t.Add(vi+1);
+				t.Add(vi+0); t.Add(vi+3); t.Add(vi+2);
+			}
+			else
+			{
+				t.Add(vi+0); t.Add(vi+1); t.Add(vi+2);
+				t.Add(vi+0); t.Add(vi+2); t.Add(vi+3);
+			}
 		}
 	}
 }
