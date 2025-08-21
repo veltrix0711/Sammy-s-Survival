@@ -8,7 +8,7 @@ namespace LowPolySurvival.Game.Gameplay.Systems
 		[SerializeField] private InventorySystem inventory;
 		[SerializeField] private DemoClothBandage clothBandage;
 		[SerializeField] private ItemDefinition clothDef;
-		[SerializeField] private float interactRange = 3f;
+		[SerializeField] private float interactRange = 6f;
 
 		private Camera cam;
 
@@ -44,9 +44,12 @@ namespace LowPolySurvival.Game.Gameplay.Systems
 			var ray = cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
 			if (Physics.Raycast(ray, out var hit, interactRange))
 			{
-				if (hit.collider != null && (hit.collider.CompareTag("ClothSource") || hit.collider.GetComponent<ClothSource>() != null))
+				var t = hit.collider != null ? hit.collider.transform : null;
+				var src = t != null ? t.GetComponentInParent<ClothSource>() : null;
+				if (src != null)
 				{
 					inventory.Add(clothDef, 1);
+					Debug.Log("Cut cloth: +1");
 				}
 			}
 		}
