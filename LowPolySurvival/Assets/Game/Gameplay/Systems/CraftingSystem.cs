@@ -32,7 +32,8 @@ namespace LowPolySurvival.Game.Gameplay.Systems
 			// Find bench nearby if not provided
 			if (bench == null && benchSearchRadius > 0f)
 			{
-				bench = FindObjectsOfType<Bench>()
+				var benches = UnityEngine.Object.FindObjectsByType<Bench>(FindObjectsSortMode.None);
+				bench = benches
 					.Where(b => (b.transform.position - transform.position).sqrMagnitude <= benchSearchRadius * benchSearchRadius)
 					.OrderBy(b => (b.transform.position - transform.position).sqrMagnitude)
 					.FirstOrDefault();

@@ -26,7 +26,7 @@ namespace LowPolySurvival.Game.Core.Persistence
 				}
 			}
 			// Discover identified savables in scene
-			foreach (var idSav in FindObjectsOfType<MonoBehaviour>(true))
+			foreach (var idSav in UnityEngine.Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
 			{
 				if (idSav is IIdentifiedSavable isv)
 				{
@@ -51,7 +51,7 @@ namespace LowPolySurvival.Game.Core.Persistence
 				}
 			}
 			// Restore identified savables
-			foreach (var idSav in FindObjectsOfType<MonoBehaviour>(true))
+			foreach (var idSav in UnityEngine.Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
 			{
 				if (idSav is IIdentifiedSavable isv)
 				{

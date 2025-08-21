@@ -12,7 +12,7 @@ namespace LowPolySurvival.Game.Core.Voxel
 		private void Awake()
 		{
 			cam = Camera.main;
-			if (world == null) world = FindObjectOfType<VoxelWorld>();
+			if (world == null) world = UnityEngine.Object.FindFirstObjectByType<VoxelWorld>();
 		}
 
 		private void Update()
