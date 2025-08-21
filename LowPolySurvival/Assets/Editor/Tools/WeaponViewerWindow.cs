@@ -2,6 +2,7 @@ using UnityEditor;
 using UnityEngine;
 using System.Linq;
 using LowPolySurvival.Game.Gameplay.Data;
+using System.IO;
 
 public class WeaponViewerWindow : EditorWindow
 {
@@ -9,6 +10,8 @@ public class WeaponViewerWindow : EditorWindow
 	private GameObject previewRoot;
 	private GameObject weaponInstance;
 	private Vector2 scroll;
+	private AddonDefinition pendingAddon;
+	private string variantsFolder = "Assets/Content/Prefabs/WeaponVariants";
 
 	// Animation preview
 	private AnimationClip[] clips;
@@ -45,6 +48,8 @@ public class WeaponViewerWindow : EditorWindow
 			DrawSlotsUI();
 			EditorGUILayout.Space(6);
 			DrawAnimationUI();
+			EditorGUILayout.Space(6);
+			DrawUtilityUI();
 		}
 
 		if (playing) Repaint();
@@ -79,25 +84,22 @@ public class WeaponViewerWindow : EditorWindow
 		scroll = EditorGUILayout.BeginScrollView(scroll, GUILayout.Height(140));
 		foreach (var s in weapon.Slots)
 		{
-			EditorGUILayout.BeginHorizontal();
+			Rect row = EditorGUILayout.BeginHorizontal();
 			EditorGUILayout.LabelField($"{s.slotType}", GUILayout.Width(120));
 			EditorGUILayout.LabelField($"Mount: {s.mountPointName}");
-			if (GUILayout.Button("Select Mount", GUILayout.Width(100)))
-			{
-				SelectMount(s.mountPointName);
-			}
-			if (GUILayout.Button("Detach", GUILayout.Width(80)))
-			{
-				DetachFromMount(s.mountPointName);
-			}
+			int attachedCount = CountAttachments(s.mountPointName);
+			EditorGUILayout.LabelField($"Attached: {attachedCount}", GUILayout.Width(90));
+			if (GUILayout.Button("Select", GUILayout.Width(70))) { SelectMount(s.mountPointName); }
+			if (GUILayout.Button("Detach", GUILayout.Width(70))) { DetachFromMount(s.mountPointName); }
 			EditorGUILayout.EndHorizontal();
+			HandlePerRowDrop(row, s);
 		}
 		EditorGUILayout.EndScrollView();
 
 		EditorGUILayout.Space(6);
-		EditorGUILayout.LabelField("Drag AddonDefinition here to attach", EditorStyles.helpBox);
+		EditorGUILayout.LabelField("Global Addon Drop (auto-slot)", EditorStyles.helpBox);
 		var dropArea = GUILayoutUtility.GetRect(0.0f, 50.0f, GUILayout.ExpandWidth(true));
-		GUI.Box(dropArea, "Drop Addon");
+		GUI.Box(dropArea, pendingAddon == null ? "Drop AddonDefinition here" : $"Pending: {pendingAddon.DisplayName}");
 		HandleAddonDrop(dropArea);
 	}
 
@@ -173,7 +175,8 @@ public class WeaponViewerWindow : EditorWindow
 					{
 						if (obj is AddonDefinition ad)
 						{
-							TryAttach(ad);
+							pendingAddon = ad;
+							TryAttachAuto(ad);
 							break;
 						}
 					}
@@ -183,7 +186,33 @@ public class WeaponViewerWindow : EditorWindow
 		}
 	}
 
-	private void TryAttach(AddonDefinition addon)
+	private void HandlePerRowDrop(Rect rowRect, WeaponDefinition.Slot s)
+	{
+		var e = Event.current;
+		switch (e.type)
+		{
+			case EventType.DragUpdated:
+			case EventType.DragPerform:
+				if (!rowRect.Contains(e.mousePosition)) return;
+				DragAndDrop.visualMode = DragAndDropVisualMode.Link;
+				if (e.type == EventType.DragPerform)
+				{
+					DragAndDrop.AcceptDrag();
+					foreach (var obj in DragAndDrop.objectReferences)
+					{
+						if (obj is AddonDefinition ad)
+						{
+							TryAttachToSlot(ad, s);
+							break;
+						}
+					}
+				}
+				Event.current.Use();
+				break;
+		}
+	}
+
+	private void TryAttachAuto(AddonDefinition addon)
 	{
 		if (weaponInstance == null || addon == null) return;
 		// Find a compatible slot
@@ -204,11 +233,83 @@ public class WeaponViewerWindow : EditorWindow
 			EditorUtility.DisplayDialog("Addon Prefab Missing", "Assign an Addon Prefab on the AddonDefinition.", "OK");
 			return;
 		}
+		AttachInstance(addon, mount);
+	}
+
+	private void TryAttachToSlot(AddonDefinition addon, WeaponDefinition.Slot slot)
+	{
+		if (weaponInstance == null || addon == null) return;
+		if (addon.CompatibleSlotTypes == null || !addon.CompatibleSlotTypes.Contains(slot.slotType))
+		{
+			EditorUtility.DisplayDialog("Incompatible", $"Addon does not support slot type '{slot.slotType}'.", "OK");
+			return;
+		}
+		var mount = weaponInstance.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == slot.mountPointName);
+		if (mount == null)
+		{
+			EditorUtility.DisplayDialog("Mount Not Found", $"Child transform '{slot.mountPointName}' not found on weapon prefab.", "OK");
+			return;
+		}
+		if (addon.AddonPrefab == null)
+		{
+			EditorUtility.DisplayDialog("Addon Prefab Missing", "Assign an Addon Prefab on the AddonDefinition.", "OK");
+			return;
+		}
+		AttachInstance(addon, mount);
+	}
+
+	private void AttachInstance(AddonDefinition addon, Transform mount)
+	{
 		var inst = (GameObject)PrefabUtility.InstantiatePrefab(addon.AddonPrefab);
 		inst.transform.SetParent(mount, false);
 		inst.transform.localPosition = addon.LocalPositionOffset;
 		inst.transform.localEulerAngles = addon.LocalEulerOffset;
 		inst.transform.localScale = addon.LocalScale;
 		Selection.activeGameObject = inst;
+	}
+
+	private int CountAttachments(string mountName)
+	{
+		if (weaponInstance == null) return 0;
+		var mount = weaponInstance.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == mountName);
+		return mount == null ? 0 : mount.childCount;
+	}
+
+	private void DrawUtilityUI()
+	{
+		EditorGUILayout.LabelField("Utilities", EditorStyles.boldLabel);
+		EditorGUILayout.BeginHorizontal();
+		variantsFolder = EditorGUILayout.TextField("Variants Folder", variantsFolder);
+		EditorGUILayout.EndHorizontal();
+		EditorGUILayout.BeginHorizontal();
+		if (GUILayout.Button("Clear All Attachments", GUILayout.Height(24))) { ClearAllAttachments(); }
+		if (GUILayout.Button("Save As Prefab Variant", GUILayout.Height(24))) { SaveVariant(); }
+		EditorGUILayout.EndHorizontal();
+	}
+
+	private void ClearAllAttachments()
+	{
+		if (weaponInstance == null) return;
+		foreach (var s in weapon.Slots)
+		{
+			DetachFromMount(s.mountPointName);
+		}
+	}
+
+	private void SaveVariant()
+	{
+		if (weaponInstance == null || weapon == null) return;
+		if (!AssetDatabase.IsValidFolder(variantsFolder))
+		{
+			Directory.CreateDirectory(variantsFolder);
+			AssetDatabase.Refresh();
+		}
+		string name = weapon.DisplayName + "_Variant";
+		string path = AssetDatabase.GenerateUniqueAssetPath(Path.Combine(variantsFolder, name + ".prefab"));
+		var prefab = PrefabUtility.SaveAsPrefabAsset(weaponInstance, path);
+		if (prefab != null)
+		{
+			EditorUtility.DisplayDialog("Saved", path, "OK");
+		}
 	}
 }
