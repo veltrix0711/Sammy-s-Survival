@@ -12,6 +12,11 @@ public class WeaponViewerWindow : EditorWindow
 	private Vector2 scroll;
 	private AddonDefinition pendingAddon;
 	private string variantsFolder = "Assets/Content/Prefabs/WeaponVariants";
+	private Transform selectedMount;
+	private EditorAttachedAddonMarker selectedAddonMarker;
+	private Vector3 editPos;
+	private Vector3 editEuler;
+	private Vector3 editScale = Vector3.one;
 
 	// Animation preview
 	private AnimationClip[] clips;
@@ -50,6 +55,8 @@ public class WeaponViewerWindow : EditorWindow
 			DrawAnimationUI();
 			EditorGUILayout.Space(6);
 			DrawUtilityUI();
+			EditorGUILayout.Space(6);
+			DrawAttachmentEditor();
 		}
 
 		if (playing) Repaint();
@@ -144,7 +151,19 @@ public class WeaponViewerWindow : EditorWindow
 	{
 		if (weaponInstance == null) return;
 		var mount = weaponInstance.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == mountName);
-		if (mount != null) Selection.activeTransform = mount;
+		if (mount != null)
+		{
+			Selection.activeTransform = mount;
+			selectedMount = mount;
+			selectedAddonMarker = mount.GetComponentInChildren<EditorAttachedAddonMarker>();
+			if (selectedAddonMarker != null)
+			{
+				var tr = selectedAddonMarker.transform;
+				editPos = tr.localPosition;
+				editEuler = tr.localEulerAngles;
+				editScale = tr.localScale;
+			}
+		}
 	}
 
 	private void DetachFromMount(string mountName)
@@ -234,6 +253,7 @@ public class WeaponViewerWindow : EditorWindow
 			return;
 		}
 		AttachInstance(addon, mount);
+		SelectMount(mount.name);
 	}
 
 	private void TryAttachToSlot(AddonDefinition addon, WeaponDefinition.Slot slot)
@@ -256,6 +276,7 @@ public class WeaponViewerWindow : EditorWindow
 			return;
 		}
 		AttachInstance(addon, mount);
+		SelectMount(mount.name);
 	}
 
 	private void AttachInstance(AddonDefinition addon, Transform mount)
@@ -265,6 +286,8 @@ public class WeaponViewerWindow : EditorWindow
 		inst.transform.localPosition = addon.LocalPositionOffset;
 		inst.transform.localEulerAngles = addon.LocalEulerOffset;
 		inst.transform.localScale = addon.LocalScale;
+		var marker = inst.AddComponent<EditorAttachedAddonMarker>();
+		marker.sourceDefinition = addon;
 		Selection.activeGameObject = inst;
 	}
 
@@ -285,6 +308,48 @@ public class WeaponViewerWindow : EditorWindow
 		if (GUILayout.Button("Clear All Attachments", GUILayout.Height(24))) { ClearAllAttachments(); }
 		if (GUILayout.Button("Save As Prefab Variant", GUILayout.Height(24))) { SaveVariant(); }
 		EditorGUILayout.EndHorizontal();
+	}
+
+	private void DrawAttachmentEditor()
+	{
+		EditorGUILayout.LabelField("Attachment Editor", EditorStyles.boldLabel);
+		if (selectedMount == null)
+		{
+			EditorGUILayout.HelpBox("Select a mount (Select button) to edit attached addon transforms.", MessageType.Info);
+			return;
+		}
+		selectedAddonMarker = selectedMount.GetComponentInChildren<EditorAttachedAddonMarker>();
+		if (selectedAddonMarker == null)
+		{
+			EditorGUILayout.HelpBox("No addon attached under selected mount.", MessageType.Info);
+			return;
+		}
+		EditorGUILayout.ObjectField("Addon", selectedAddonMarker.sourceDefinition, typeof(AddonDefinition), false);
+		editPos = EditorGUILayout.Vector3Field("Local Position", editPos);
+		editEuler = EditorGUILayout.Vector3Field("Local Euler", editEuler);
+		editScale = EditorGUILayout.Vector3Field("Local Scale", editScale);
+		if (GUILayout.Button("Apply To Instance"))
+		{
+			var tr = selectedAddonMarker.transform;
+			Undo.RecordObject(tr, "Edit Addon Transform");
+			tr.localPosition = editPos;
+			tr.localEulerAngles = editEuler;
+			tr.localScale = editScale;
+		}
+		if (GUILayout.Button("Write Back To AddonDefinition"))
+		{
+			var ad = selectedAddonMarker.sourceDefinition;
+			if (ad != null)
+			{
+				var so = new SerializedObject(ad);
+				so.FindProperty("localPositionOffset").vector3Value = editPos;
+				so.FindProperty("localEulerOffset").vector3Value = editEuler;
+				so.FindProperty("localScale").vector3Value = editScale;
+				so.ApplyModifiedPropertiesWithoutUndo();
+				EditorUtility.SetDirty(ad);
+				AssetDatabase.SaveAssets();
+			}
+		}
 	}
 
 	private void ClearAllAttachments()
