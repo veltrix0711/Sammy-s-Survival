@@ -15,6 +15,7 @@ namespace LowPolySurvival.Game.Gameplay.Player
 		private CharacterController controller;
 		private float pitch;
 		private Vector3 velocity;
+		private Vector3 groundNormal = Vector3.up;
 
 		private void Awake()
 		{
@@ -22,6 +23,10 @@ namespace LowPolySurvival.Game.Gameplay.Player
 			if (controller.height < 1.5f) controller.height = 1.8f;
 			if (controller.radius < 0.3f) controller.radius = 0.35f;
 			if (Mathf.Abs(controller.center.y) < 0.01f) controller.center = new Vector3(0, 0.9f, 0);
+			controller.slopeLimit = Mathf.Clamp(controller.slopeLimit, 60f, 89f);
+			controller.stepOffset = Mathf.Max(controller.stepOffset, 0.45f);
+			controller.skinWidth = Mathf.Max(controller.skinWidth, 0.08f);
+			controller.minMoveDistance = 0f;
 			if (playerCamera == null)
 			{
 				var camGo = new GameObject("PlayerCamera");
@@ -69,13 +74,33 @@ namespace LowPolySurvival.Game.Gameplay.Player
 #endif
 			}
 			Vector3 input = new Vector3(h, 0, v);
-			Vector3 world = transform.TransformDirection(input.normalized) * moveSpeed;
-			velocity.x = world.x;
-			velocity.z = world.z;
-			velocity.y += gravity * Time.deltaTime;
-			var move = new Vector3(velocity.x, velocity.y, velocity.z) * Time.deltaTime;
-			controller.Move(move);
-			if (controller.isGrounded && velocity.y < 0) velocity.y = -2f;
+			float inputMag = Mathf.Clamp01(input.magnitude);
+			Vector3 wishDirWorld = transform.TransformDirection(input.normalized);
+			Vector3 alongGround = Vector3.ProjectOnPlane(wishDirWorld, groundNormal).normalized;
+			Vector3 planar = alongGround * (moveSpeed * inputMag);
+
+			if (controller.isGrounded)
+			{
+				// SimpleMove applies gravity internally and handles ground sliding nicely
+				controller.SimpleMove(planar);
+				velocity.y = -2f; // keep grounded
+			}
+			else
+			{
+				velocity.x = planar.x;
+				velocity.z = planar.z;
+				velocity.y += gravity * Time.deltaTime;
+				var move = velocity * Time.deltaTime;
+				controller.Move(move);
+			}
+		}
+
+		private void OnControllerColliderHit(ControllerColliderHit hit)
+		{
+			if (hit.normal.y > 0.1f)
+			{
+				groundNormal = hit.normal;
+			}
 		}
 	}
 }
