@@ -51,13 +51,13 @@ namespace LowPolySurvival.Game.Bootstrap
 
 			if (ensureSaveSystems)
 			{
-				var gsObj = GameObject.FindObjectOfType<GameState>();
+				var gsObj = GameObject.FindFirstObjectByType<GameState>();
 				if (gsObj == null)
 				{
 					var go = new GameObject("GameState");
 					go.AddComponent<GameState>();
 				}
-				if (GameObject.FindObjectOfType<SaveHotkeys>() == null)
+				if (GameObject.FindFirstObjectByType<SaveHotkeys>() == null)
 				{
 					var hk = new GameObject("SaveHotkeys");
 					hk.AddComponent<SaveHotkeys>();
@@ -66,7 +66,7 @@ namespace LowPolySurvival.Game.Bootstrap
 
 			if (ensurePauseMenu)
 			{
-				if (GameObject.FindObjectOfType<PauseMenu>() == null)
+				if (GameObject.FindFirstObjectByType<PauseMenu>() == null)
 				{
 					var pm = new GameObject("PauseMenu");
 					pm.AddComponent<PauseMenu>();
@@ -74,7 +74,7 @@ namespace LowPolySurvival.Game.Bootstrap
 			}
 
 			// Ensure interaction prompt HUD
-			if (GameObject.FindObjectOfType<InteractionPrompt>() == null)
+			if (GameObject.FindFirstObjectByType<InteractionPrompt>() == null)
 			{
 				var hud = new GameObject("InteractionPrompt");
 				hud.AddComponent<InteractionPrompt>();
