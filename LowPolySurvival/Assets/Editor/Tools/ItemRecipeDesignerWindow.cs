@@ -10,6 +10,8 @@ public class ItemRecipeDesignerWindow : EditorWindow
 	private enum Tab { Items, Addons, Recipes, Weapons, Tools }
 	private Tab activeTab;
 
+	private enum InteractableKind { None, Pickup, Cuttable }
+
 	// Common
 	private string itemsFolder = "Assets/Content/ScriptableObjects/Items";
 	private string addonsFolder = "Assets/Content/ScriptableObjects/Addons";
@@ -27,6 +29,10 @@ public class ItemRecipeDesignerWindow : EditorWindow
 	private Vector3[] scalePresetValues = new[] { Vector3.one, Vector3.one * 0.5f, Vector3.one * 0.25f, Vector3.one * 0.1f, Vector3.one * 0.05f, Vector3.one * 2f };
 	private float scaleMultiplier = 1f;
 	private GameObject sourcePrefab;
+	private InteractableKind interactable = InteractableKind.None;
+	private int pickupQuantity = 1;
+	private int cutYieldCount = 1;
+	private bool cutDestroyOnCut = false;
 
 	// Addons
 	private string addonId = "";
@@ -100,9 +106,26 @@ public class ItemRecipeDesignerWindow : EditorWindow
 		scalePreset = Vector3.one * scaleMultiplier;
 		EditorGUILayout.LabelField("Resulting Scale", $"{scalePreset.x:0.###}u (1u = 1m)");
 		sourcePrefab = (GameObject)EditorGUILayout.ObjectField("Source Prefab (optional)", sourcePrefab, typeof(GameObject), false);
+		EditorGUILayout.Space(4);
+		EditorGUILayout.LabelField("Prefab / Interactable", EditorStyles.boldLabel);
+		interactable = (InteractableKind)EditorGUILayout.EnumPopup("Interactable Kind", interactable);
+		if (interactable == InteractableKind.Pickup)
+		{
+			pickupQuantity = EditorGUILayout.IntField("Pickup Quantity", Mathf.Max(1, pickupQuantity));
+		}
+		else if (interactable == InteractableKind.Cuttable)
+		{
+			cutYieldCount = EditorGUILayout.IntField("Yield Count", Mathf.Max(1, cutYieldCount));
+			cutDestroyOnCut = EditorGUILayout.Toggle("Destroy On Cut", cutDestroyOnCut);
+		}
 		if (GUILayout.Button("Create ItemDefinition"))
 		{
 			CreateItem();
+		}
+		if (GUILayout.Button("Create ItemDefinition + Gameplay Prefab"))
+		{
+			var def = CreateItem();
+			if (def != null) CreateItemGameplayPrefab(def);
 		}
 	}
 
@@ -185,6 +208,16 @@ public class ItemRecipeDesignerWindow : EditorWindow
 		if (GUILayout.Button("Create Docs Backup Snapshot"))
 		{
 			CreateDocsBackup();
+		}
+		EditorGUILayout.Space(6);
+		EditorGUILayout.LabelField("Bench Helpers", EditorStyles.boldLabel);
+		if (GUILayout.Button("Create Bench Prefab"))
+		{
+			CreateBenchPrefab();
+		}
+		if (GUILayout.Button("Spawn Bench In Scene"))
+		{
+			SpawnBenchInScene();
 		}
 	}
 
@@ -295,13 +328,13 @@ public class ItemRecipeDesignerWindow : EditorWindow
 		Selection.activeObject = def;
 	}
 
-	private void CreateItem()
+	private ItemDefinition CreateItem()
 	{
-		if (!ValidateFolder(itemsFolder)) return;
+		if (!ValidateFolder(itemsFolder)) return null;
 		if (string.IsNullOrWhiteSpace(itemId) || string.IsNullOrWhiteSpace(itemName))
 		{
 			EditorUtility.DisplayDialog("Invalid", "Item Id and Display Name are required.", "OK");
-			return;
+			return null;
 		}
 		var path = Path.Combine(itemsFolder, itemName + ".asset");
 		var def = ScriptableObject.CreateInstance<ItemDefinition>();
@@ -318,6 +351,50 @@ public class ItemRecipeDesignerWindow : EditorWindow
 		Selection.activeObject = def;
 		SyncRegistry();
 		if (sourcePrefab != null) ScaleAndSavePrefab(def, sourcePrefab);
+		return def;
+	}
+
+	private void CreateItemGameplayPrefab(ItemDefinition def)
+	{
+		if (!ValidateFolder(prefabsFolder)) return;
+		GameObject go;
+		if (sourcePrefab != null)
+		{
+			go = (GameObject)PrefabUtility.InstantiatePrefab(sourcePrefab);
+		}
+		else
+		{
+			go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+		}
+		go.transform.localScale = scalePreset;
+		go.name = def.DisplayName + "_Gameplay";
+		switch (interactable)
+		{
+			case InteractableKind.Pickup:
+			{
+				var comp = go.AddComponent<LowPolySurvival.Game.Gameplay.Systems.Interaction.PickupInteractable>();
+				var so = new SerializedObject(comp);
+				so.FindProperty("item").objectReferenceValue = def;
+				so.FindProperty("quantity").intValue = Mathf.Max(1, pickupQuantity);
+				so.ApplyModifiedPropertiesWithoutUndo();
+				break;
+			}
+			case InteractableKind.Cuttable:
+			{
+				var comp = go.AddComponent<LowPolySurvival.Game.Gameplay.Systems.Interaction.CuttableInteractable>();
+				var so = new SerializedObject(comp);
+				so.FindProperty("yieldItem").objectReferenceValue = def;
+				so.FindProperty("yieldCount").intValue = Mathf.Max(1, cutYieldCount);
+				so.FindProperty("destroyOnCut").boolValue = cutDestroyOnCut;
+				so.ApplyModifiedPropertiesWithoutUndo();
+				break;
+			}
+		}
+		var savePath = Path.Combine(prefabsFolder, go.name + ".prefab");
+		PrefabUtility.SaveAsPrefabAsset(go, savePath);
+		GameObject.DestroyImmediate(go);
+		AssetDatabase.SaveAssets();
+		Selection.activeObject = AssetDatabase.LoadAssetAtPath<GameObject>(savePath);
 	}
 
 	private void CreateAddon()
@@ -440,6 +517,30 @@ public class ItemRecipeDesignerWindow : EditorWindow
 		}
 		AssetDatabase.Refresh();
 		EditorUtility.DisplayDialog("Backup Created", backupDir, "OK");
+	}
+
+private void CreateBenchPrefab()
+	{
+		if (!ValidateFolder(prefabsFolder)) return;
+		var bench = GameObject.CreatePrimitive(PrimitiveType.Cube);
+		bench.name = "Bench";
+		var bc = bench.GetComponent<BoxCollider>(); if (bc == null) bc = bench.AddComponent<BoxCollider>();
+		bench.AddComponent<LowPolySurvival.Game.Gameplay.Systems.Bench>();
+		var path = Path.Combine(prefabsFolder, bench.name + ".prefab");
+		PrefabUtility.SaveAsPrefabAsset(bench, path);
+		GameObject.DestroyImmediate(bench);
+		AssetDatabase.SaveAssets();
+		Selection.activeObject = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+	}
+
+private void SpawnBenchInScene()
+	{
+		var bench = GameObject.CreatePrimitive(PrimitiveType.Cube);
+		bench.name = "Bench";
+		if (bench.GetComponent<BoxCollider>() == null) bench.AddComponent<BoxCollider>();
+		bench.AddComponent<LowPolySurvival.Game.Gameplay.Systems.Bench>();
+		Undo.RegisterCreatedObjectUndo(bench, "Spawn Bench");
+		Selection.activeGameObject = bench;
 	}
 
 	// Helpers
