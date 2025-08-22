@@ -11,10 +11,16 @@ namespace LowPolySurvival.Game.Gameplay.UI
 		[SerializeField] private LayerMask mask = ~0;
 		[SerializeField] private GUIStyle style;
 		private string currentText = "";
+		private GameObject interactor;
 
 		private void Awake()
 		{
 			if (cam == null) cam = Camera.main;
+			if (interactor == null)
+			{
+				var pi = Object.FindFirstObjectByType<LowPolySurvival.Game.Gameplay.Systems.PlayerInteraction>();
+				if (pi != null) interactor = pi.gameObject;
+			}
 			if (style == null)
 			{
 				style = new GUIStyle(GUI.skin.label);
@@ -34,7 +40,13 @@ namespace LowPolySurvival.Game.Gameplay.UI
 				if (it != null)
 				{
 					string prompt = it.GetPrompt();
-					currentText = $"E: Use {prompt}\nX: Cut {prompt}";
+					System.Text.StringBuilder sb = new System.Text.StringBuilder();
+					if (it.CanInteract(InteractionVerb.Use, interactor)) sb.AppendLine($"E: Use {prompt}");
+					if (it.CanInteract(InteractionVerb.Take, interactor)) sb.AppendLine($"F: Take {prompt}");
+					if (it.CanInteract(InteractionVerb.Cut, interactor)) sb.AppendLine($"X: Cut {prompt}");
+					if (it.CanInteract(InteractionVerb.Open, interactor)) sb.AppendLine($"E: Open {prompt}");
+					if (it.CanInteract(InteractionVerb.Close, interactor)) sb.AppendLine($"E: Close {prompt}");
+					currentText = sb.ToString().TrimEnd();
 				}
 			}
 		}
@@ -42,7 +54,7 @@ namespace LowPolySurvival.Game.Gameplay.UI
 		private void OnGUI()
 		{
 			if (string.IsNullOrEmpty(currentText)) return;
-			const int w = 320; const int h = 48;
+			const int w = 360; const int h = 64;
 			int x = (Screen.width - w) / 2;
 			int y = Screen.height - 100;
 			GUI.Box(new Rect(x - 8, y - 8, w + 16, h + 16), "");

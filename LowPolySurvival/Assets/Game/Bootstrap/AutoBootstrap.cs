@@ -72,6 +72,13 @@ namespace LowPolySurvival.Game.Bootstrap
 					pm.AddComponent<PauseMenu>();
 				}
 			}
+
+			// Ensure interaction prompt HUD
+			if (GameObject.FindObjectOfType<InteractionPrompt>() == null)
+			{
+				var hud = new GameObject("InteractionPrompt");
+				hud.AddComponent<InteractionPrompt>();
+			}
 		}
 	}
 }

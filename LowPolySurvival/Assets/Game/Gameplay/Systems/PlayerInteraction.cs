@@ -32,6 +32,11 @@ namespace LowPolySurvival.Game.Gameplay.Systems
 			{
 				TryVerb(InteractionVerb.Cut);
 			}
+
+			if (Input.GetKeyDown(KeyCode.F))
+			{
+				TryVerb(InteractionVerb.Take);
+			}
 		}
 
 		private void TryVerb(InteractionVerb verb)
