@@ -9,6 +9,7 @@ namespace LowPolySurvival.Game.Gameplay.UI
 		[SerializeField] private CraftingSystem crafting;
 		[SerializeField] private RecipeDefinition[] recipes;
 		[SerializeField] private bool visible;
+		public bool IsVisible => visible;
 
 		private void OnGUI()
 		{

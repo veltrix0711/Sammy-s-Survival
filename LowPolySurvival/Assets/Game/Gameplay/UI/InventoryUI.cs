@@ -11,6 +11,8 @@ namespace LowPolySurvival.Game.Gameplay.UI
 		[SerializeField] private bool visible;
 		[SerializeField] private ItemDefinition[] watchItems; // optional quick display
 
+		public bool IsVisible => visible;
+
 		private void Awake()
 		{
 			if (inventory == null)

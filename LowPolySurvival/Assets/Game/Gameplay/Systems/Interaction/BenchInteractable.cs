@@ -23,8 +23,14 @@ namespace LowPolySurvival.Game.Gameplay.Systems.Interaction
 		public override bool Interact(InteractionVerb verb, GameObject interactor)
 		{
 			if (verb != InteractionVerb.Use) return false;
-			if (recipeUI != null) recipeUI.SetVisible(true);
-			if (inventoryUI != null) inventoryUI.SetVisible(true);
+			bool nextVisible = true;
+			if (recipeUI != null && inventoryUI != null)
+			{
+				nextVisible = !(recipeUI.IsVisible || inventoryUI.IsVisible);
+			}
+			if (recipeUI != null) recipeUI.SetVisible(nextVisible);
+			if (inventoryUI != null) inventoryUI.SetVisible(nextVisible);
+			// ensure pause menu is not opened here; just UI panels
 			return true;
 		}
 	}
