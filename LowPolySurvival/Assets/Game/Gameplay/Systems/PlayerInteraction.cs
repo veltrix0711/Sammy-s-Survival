@@ -1,5 +1,6 @@
 using UnityEngine;
 using LowPolySurvival.Game.Gameplay.Data;
+using LowPolySurvival.Game.Gameplay.Systems.Interaction;
 
 namespace LowPolySurvival.Game.Gameplay.Systems
 {
@@ -24,26 +25,36 @@ namespace LowPolySurvival.Game.Gameplay.Systems
 			if (cam == null) cam = Camera.main;
 			if (Input.GetKeyDown(KeyCode.E))
 			{
-				Debug.Log("Pressed E: Craft Bandage");
-				clothBandage?.TryMakeBandage();
+				TryVerb(InteractionVerb.Use);
 			}
 
 			if (Input.GetKeyDown(KeyCode.X))
 			{
-				Debug.Log("Pressed X: TryCut");
-				TryCut();
+				TryVerb(InteractionVerb.Cut);
 			}
 		}
 
-		private void TryCut()
+		private void TryVerb(InteractionVerb verb)
 		{
-			if (cam == null || inventory == null || clothDef == null) return;
+			if (cam == null) return;
 			var ray = cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
 			Debug.DrawRay(ray.origin, ray.direction * interactRange, Color.cyan, 0.25f);
-			if (Physics.Raycast(ray, out var hit, interactRange, raycastMask, QueryTriggerInteraction.Ignore))
+			if (!Physics.Raycast(ray, out var hit, interactRange, raycastMask, QueryTriggerInteraction.Ignore)) return;
+			var t = hit.collider != null ? hit.collider.transform : null;
+			if (t == null) return;
+			var interactable = t.GetComponentInParent<IInteractable>();
+			if (interactable != null)
 			{
-				var t = hit.collider != null ? hit.collider.transform : null;
-				var src = t != null ? t.GetComponentInParent<ClothSource>() : null;
+				if (interactable.CanInteract(verb, this.gameObject))
+				{
+					interactable.Interact(verb, this.gameObject);
+					return;
+				}
+			}
+			// Fallback: legacy cloth cut for demo
+			if (verb == InteractionVerb.Cut && inventory != null && clothDef != null)
+			{
+				var src = t.GetComponentInParent<ClothSource>();
 				if (src != null)
 				{
 					inventory.Add(clothDef, 1);
