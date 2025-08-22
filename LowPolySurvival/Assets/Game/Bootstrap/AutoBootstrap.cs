@@ -79,6 +79,13 @@ namespace LowPolySurvival.Game.Bootstrap
 				var hud = new GameObject("InteractionPrompt");
 				hud.AddComponent<InteractionPrompt>();
 			}
+
+			// Ensure inventory HUD
+			if (GameObject.FindFirstObjectByType<InventoryUI>() == null)
+			{
+				var invHud = new GameObject("InventoryUI");
+				invHud.AddComponent<InventoryUI>();
+			}
 		}
 	}
 }

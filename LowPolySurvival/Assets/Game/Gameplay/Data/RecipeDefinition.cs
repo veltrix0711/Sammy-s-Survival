@@ -17,11 +17,13 @@ namespace LowPolySurvival.Game.Gameplay.Data
 		[SerializeField] private Stack[] outputs;
 		[SerializeField] private string requiredKnowledgeToken; // empty for basics
 		[SerializeField] private float baseSeconds = 5f;
+		[SerializeField] private bool requireBench = false;
 
 		public string RecipeId => recipeId;
 		public Stack[] Inputs => inputs;
 		public Stack[] Outputs => outputs;
 		public string RequiredKnowledgeToken => requiredKnowledgeToken;
 		public float BaseSeconds => baseSeconds;
+		public bool RequireBench => requireBench;
 	}
 }

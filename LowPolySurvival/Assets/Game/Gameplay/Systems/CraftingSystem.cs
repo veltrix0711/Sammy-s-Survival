@@ -38,6 +38,12 @@ namespace LowPolySurvival.Game.Gameplay.Systems
 					.OrderBy(b => (b.transform.position - transform.position).sqrMagnitude)
 					.FirstOrDefault();
 			}
+			// Enforce bench requirement
+			if (recipe.RequireBench && bench == null)
+			{
+				Debug.LogWarning("Craft aborted: bench required");
+				return false;
+			}
 			var speed = bench != null ? bench.SpeedMultiplier : 1f;
 			var time = recipe.BaseSeconds / Mathf.Max(0.1f, speed);
 			// Consume inputs
