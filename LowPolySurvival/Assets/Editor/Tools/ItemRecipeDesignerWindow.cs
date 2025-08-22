@@ -23,8 +23,9 @@ public class ItemRecipeDesignerWindow : EditorWindow
 	private float weight = 0.1f;
 	private float volume = 0.1f;
 	private Vector3 scalePreset = Vector3.one;
-	private string[] scalePresetNames = new[] { "1u (1m)", "0.5u (Small)", "2u (Large)" };
-	private Vector3[] scalePresetValues = new[] { Vector3.one, Vector3.one * 0.5f, Vector3.one * 2f };
+	private string[] scalePresetNames = new[] { "1u (1m)", "0.5u (Small)", "0.25u (Tiny)", "0.1u (Very Tiny)", "0.05u (Micro)", "2u (Large)" };
+	private Vector3[] scalePresetValues = new[] { Vector3.one, Vector3.one * 0.5f, Vector3.one * 0.25f, Vector3.one * 0.1f, Vector3.one * 0.05f, Vector3.one * 2f };
+	private float scaleMultiplier = 1f;
 	private GameObject sourcePrefab;
 
 	// Addons
@@ -89,7 +90,14 @@ public class ItemRecipeDesignerWindow : EditorWindow
 		EditorGUILayout.LabelField("Tags");
 		DrawStringArray(ref tags);
 		var sel = GUILayout.SelectionGrid(-1, scalePresetNames, 3);
-		if (sel >= 0) scalePreset = scalePresetValues[sel];
+		if (sel >= 0)
+		{
+			scalePreset = scalePresetValues[sel];
+			scaleMultiplier = scalePreset.x;
+		}
+		scaleMultiplier = EditorGUILayout.Slider("Custom Uniform Scale (u)", scaleMultiplier, 0.01f, 10f);
+		scalePreset = Vector3.one * scaleMultiplier;
+		EditorGUILayout.LabelField("Resulting Scale", $"{scalePreset.x:0.###}u (1u = 1m)");
 		sourcePrefab = (GameObject)EditorGUILayout.ObjectField("Source Prefab (optional)", sourcePrefab, typeof(GameObject), false);
 		if (GUILayout.Button("Create ItemDefinition"))
 		{
