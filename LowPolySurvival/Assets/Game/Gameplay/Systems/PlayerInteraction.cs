@@ -14,10 +14,12 @@ namespace LowPolySurvival.Game.Gameplay.Systems
 		[SerializeField] private LayerMask raycastMask = ~0;
 
 		private Camera cam;
+        private LowPolySurvival.Game.Gameplay.Player.PlayerHands hands;
 
 		private void Awake()
 		{
 			cam = Camera.main;
+            hands = GetComponent<LowPolySurvival.Game.Gameplay.Player.PlayerHands>();
 		}
 
 		private void Update()
@@ -37,6 +39,12 @@ namespace LowPolySurvival.Game.Gameplay.Systems
 			{
 				TryVerb(InteractionVerb.Take);
 			}
+
+            if (Input.GetKeyDown(KeyCode.G) && hands != null)
+            {
+                // Drop carried prop
+                hands.Drop();
+            }
 		}
 
 		private void TryVerb(InteractionVerb verb)
@@ -56,6 +64,18 @@ namespace LowPolySurvival.Game.Gameplay.Systems
 					return;
 				}
 			}
+
+            // If hands are available and item is HandsOnly, allow pickup as prop
+            if (verb == InteractionVerb.Take && hands != null)
+            {
+                var defCarrier = t.GetComponentInParent<LowPolySurvival.Game.Gameplay.Systems.Interaction.PickupInteractable>();
+                if (defCarrier == null)
+                {
+                    // generic prop pickup
+                    hands.TryPickup(t.gameObject);
+                    return;
+                }
+            }
 			// Fallback: legacy cloth cut for demo
 			if (verb == InteractionVerb.Cut && inventory != null && clothDef != null)
 			{
