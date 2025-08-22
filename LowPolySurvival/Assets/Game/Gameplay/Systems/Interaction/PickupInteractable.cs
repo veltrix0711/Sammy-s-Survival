@@ -7,6 +7,8 @@ namespace LowPolySurvival.Game.Gameplay.Systems.Interaction
 	{
 		[SerializeField] private ItemDefinition item;
 		[SerializeField] private int quantity = 1;
+		[SerializeField] private bool useCustomCondition = false;
+		[SerializeField] private LowPolySurvival.Game.Gameplay.Data.ConditionSet customCondition;
 
 		public override bool CanInteract(InteractionVerb verb, GameObject interactor)
 		{
@@ -17,7 +19,15 @@ namespace LowPolySurvival.Game.Gameplay.Systems.Interaction
 		{
 			var inv = interactor.GetComponent<LowPolySurvival.Game.Gameplay.Systems.InventorySystem>();
 			if (inv == null || item == null) return false;
-			inv.Add(item, Mathf.Max(1, quantity));
+			int qty = Mathf.Max(1, quantity);
+			if (useCustomCondition)
+			{
+				inv.AddWithCondition(item, qty, customCondition);
+			}
+			else
+			{
+				inv.Add(item, qty);
+			}
 			GameObject.Destroy(this.gameObject);
 			return true;
 		}
