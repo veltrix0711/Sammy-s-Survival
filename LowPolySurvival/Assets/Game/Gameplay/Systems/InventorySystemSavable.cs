@@ -35,8 +35,7 @@ namespace LowPolySurvival.Game.Gameplay.Systems
 			{
 				var def = registry.GetById(e.itemId);
 				if (def == null || e.count <= 0) continue;
-				// Recreate counts using inventory Add. Condition granularity is not yet per-instance attachable through public API.
-				inventory.Add(def, e.count);
+				inventory.AddWithCondition(def, e.count, e.condition);
 			}
 		}
 	}

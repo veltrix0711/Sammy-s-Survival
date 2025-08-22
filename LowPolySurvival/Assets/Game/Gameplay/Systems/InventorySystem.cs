@@ -61,6 +61,32 @@ namespace LowPolySurvival.Game.Gameplay.Systems
 			}
 		}
 
+		public void AddWithCondition(ItemDefinition definition, int quantity, ConditionSet condition)
+		{
+			if (definition == null || quantity <= 0) return;
+			Ensure(definition);
+			if (definition.Stackable)
+			{
+				int remaining = quantity;
+				int maxStack = definition.MaxStack;
+				while (remaining > 0)
+				{
+					int add = Mathf.Min(remaining, maxStack);
+					var inst = new ItemInstance(definition, condition, add);
+					definitionToInstances[definition].Add(inst);
+					remaining -= add;
+				}
+			}
+			else
+			{
+				for (int i = 0; i < quantity; i++)
+				{
+					var inst = new ItemInstance(definition, condition, 1);
+					definitionToInstances[definition].Add(inst);
+				}
+			}
+		}
+
 		public bool Remove(ItemDefinition definition, int quantity)
 		{
 			if (definition == null || quantity <= 0) return false;
