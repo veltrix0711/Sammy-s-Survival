@@ -13,7 +13,7 @@ namespace LowPolySurvival.Game.EditorTools
 			var groundParent = GameObject.Find("Ground");
 			if (groundParent == null)
 			{
-				var guess = GameObject.FindObjectsOfType<MeshRenderer>();
+				var guess = GameObject.FindObjectsByType<MeshRenderer>(FindObjectsSortMode.None);
 				Bounds? b = null;
 				foreach (var mr in guess)
 				{
@@ -97,7 +97,7 @@ namespace LowPolySurvival.Game.EditorTools
 			var t = go.GetComponent<Terrain>();
 			t.terrainData.terrainLayers = new TerrainLayer[] { layer };
 			// Mark static for batching/occlusion
-			GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.BatchingStatic | StaticEditorFlags.OccludeeStatic | StaticEditorFlags.OccluderStatic | StaticEditorFlags.NavigationStatic);
+			GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.BatchingStatic | StaticEditorFlags.OccludeeStatic | StaticEditorFlags.OccluderStatic);
 
 			EditorUtility.DisplayDialog("Terrain Created", "Terrain created matching ground tile bounds.", "OK");
 		}

@@ -63,7 +63,7 @@ namespace LowPolySurvival.Game.EditorTools
 					var mr = tile.GetComponent<MeshRenderer>();
 					if (mr != null) mr.sharedMaterial = groundMat;
 					// Mark static and occlusion-friendly
-					GameObjectUtility.SetStaticEditorFlags(tile, StaticEditorFlags.BatchingStatic | StaticEditorFlags.OccludeeStatic | StaticEditorFlags.OccluderStatic | StaticEditorFlags.NavigationStatic);
+					GameObjectUtility.SetStaticEditorFlags(tile, StaticEditorFlags.BatchingStatic | StaticEditorFlags.OccludeeStatic | StaticEditorFlags.OccluderStatic);
 				}
 			}
 
