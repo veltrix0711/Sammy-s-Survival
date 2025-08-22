@@ -3,7 +3,7 @@
 This section is the single source of truth for project alignment. All major changes must update this overview.
 
 ## Vision & Pillars
-- Tactile, low-poly survival; dig/place terrain; everything interactable.
+- Tactile, low-poly survival (3D) for PC; everything interactable. Voxels deferred to targeted areas later.
 - Craft-anywhere with real-world logic (no blueprint unlocks). Knowledge from books/notes/hard drives for advanced recipes; basics are common sense (knife cuts, tape/glue/screws/bolts attach, grinder/hacksaw cut, oil+rag clean).
 - Finite economy: every item is unique (1-of-1) and never respawns; totals only change via crafting/disassembly or destruction.
 - NPC survivors are unique individuals with goals/lifestyles (base-builder, van nomad, loner, small groups). They trade/run/fight contextually and live by the same rules as the player.
@@ -11,7 +11,7 @@ This section is the single source of truth for project alignment. All major chan
 - Single-player and server-authoritative co-op (1–8). PvE first.
 
 ## Feature Summary
-- Voxel terrain (chunked), dig/place; interactable ground/water/trees/rocks/structures/furniture.
+- Open-world 3D low-poly environment; interactable terrain/props/structures/furniture. (Voxel areas later.)
 - Craft-anywhere; benches only speed/improve quality.
 - Inventory (weight/volume), durability, wetness/condition; modular weapons/vehicles/building pieces.
 - Ballistics (gravity/drag, material penetration, ricochet), melee with stamina and blocks.
