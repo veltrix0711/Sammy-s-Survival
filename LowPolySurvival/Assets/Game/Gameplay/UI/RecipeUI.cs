@@ -8,9 +8,11 @@ namespace LowPolySurvival.Game.Gameplay.UI
 	{
 		[SerializeField] private CraftingSystem crafting;
 		[SerializeField] private RecipeDefinition[] recipes;
+		[SerializeField] private bool visible;
 
 		private void OnGUI()
 		{
+			if (!visible) return;
 			const int w = 280; int x = 16; int y = Screen.height - 160; int h = 24; int pad = 6;
 			GUI.Box(new Rect(x - 8, y - 8, w + 16, 140), "Recipes");
 			if (recipes == null || crafting == null) return;
@@ -23,6 +25,11 @@ namespace LowPolySurvival.Game.Gameplay.UI
 				}
 				y += h + pad;
 			}
+		}
+
+		public void SetVisible(bool isVisible)
+		{
+			visible = isVisible;
 		}
 	}
 }

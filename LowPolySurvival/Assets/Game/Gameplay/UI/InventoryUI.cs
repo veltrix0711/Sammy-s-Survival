@@ -40,6 +40,11 @@ namespace LowPolySurvival.Game.Gameplay.UI
 				}
 			}
 		}
+
+		public void SetVisible(bool isVisible)
+		{
+			visible = isVisible;
+		}
 	}
 }
 
