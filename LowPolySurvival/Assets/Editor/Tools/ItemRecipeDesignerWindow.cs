@@ -30,6 +30,8 @@ public class ItemRecipeDesignerWindow : EditorWindow
 	private ConditionSet itemDefaultCondition;
 	private bool itemStackable = true;
 	private int itemMaxStack = 10;
+	private CarryMode itemCarryMode = CarryMode.Inventory;
+	private float itemCarryBulk = 1f;
 	private Vector3 scalePreset = Vector3.one;
 	private string[] scalePresetNames = new[] { "1u (1m)", "0.5u (Small)", "0.25u (Tiny)", "0.1u (Very Tiny)", "0.05u (Micro)", "2u (Large)" };
 	private Vector3[] scalePresetValues = new[] { Vector3.one, Vector3.one * 0.5f, Vector3.one * 0.25f, Vector3.one * 0.1f, Vector3.one * 0.05f, Vector3.one * 2f };
@@ -113,6 +115,8 @@ public class ItemRecipeDesignerWindow : EditorWindow
 		itemDefaultCondition.jammed = EditorGUILayout.Toggle("Jammed", itemDefaultCondition.jammed);
 		itemStackable = EditorGUILayout.Toggle("Stackable", itemStackable);
 		if (itemStackable) itemMaxStack = Mathf.Max(1, EditorGUILayout.IntField("Max Stack", itemMaxStack));
+		itemCarryMode = (CarryMode)EditorGUILayout.EnumPopup("Carry Mode", itemCarryMode);
+		itemCarryBulk = EditorGUILayout.Slider("Carry Bulk", itemCarryBulk, 0.01f, 100f);
 		EditorGUILayout.LabelField("Tags");
 		DrawStringArray(ref tags);
 		var sel = GUILayout.SelectionGrid(-1, scalePresetNames, 3);
@@ -375,6 +379,8 @@ public class ItemRecipeDesignerWindow : EditorWindow
 		so.FindProperty("defaultCondition").FindPropertyRelative("jammed").boolValue = itemDefaultCondition.jammed;
 		so.FindProperty("stackable").boolValue = itemStackable;
 		so.FindProperty("maxStack").intValue = Mathf.Max(1, itemMaxStack);
+		so.FindProperty("carryMode").enumValueIndex = (int)itemCarryMode;
+		so.FindProperty("carryBulk").floatValue = itemCarryBulk;
 		ApplyStringArray(so.FindProperty("tags"), tags);
 		so.ApplyModifiedPropertiesWithoutUndo();
 		EditorUtility.SetDirty(def);

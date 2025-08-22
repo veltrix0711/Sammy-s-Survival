@@ -80,6 +80,12 @@ namespace LowPolySurvival.Game.Gameplay.Data
 			stackCount = Mathf.Max(1, count);
 		}
 	}
+
+	public enum CarryMode
+	{
+		Inventory,
+		HandsOnly
+	}
 }
 
 

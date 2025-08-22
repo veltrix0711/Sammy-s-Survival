@@ -17,6 +17,8 @@ namespace LowPolySurvival.Game.Gameplay.Data
 		[SerializeField] private ConditionSet defaultCondition;
 		[SerializeField] private bool stackable = true;
 		[SerializeField] private int maxStack = 10;
+		[SerializeField] private CarryMode carryMode = CarryMode.Inventory;
+		[SerializeField] private float carryBulk = 1f; // affects handling/require trolley, etc.
 
 		public string ItemId => itemId;
 		public string DisplayName => displayName;
@@ -29,5 +31,7 @@ namespace LowPolySurvival.Game.Gameplay.Data
 		public ConditionSet DefaultCondition => defaultCondition;
 		public bool Stackable => stackable;
 		public int MaxStack => Mathf.Max(1, maxStack);
+		public CarryMode Carryability => carryMode;
+		public float CarryBulk => Mathf.Max(0.01f, carryBulk);
 	}
 }
