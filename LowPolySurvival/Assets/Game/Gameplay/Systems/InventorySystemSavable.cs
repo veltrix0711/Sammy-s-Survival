@@ -10,18 +10,17 @@ namespace LowPolySurvival.Game.Gameplay.Systems
 		[SerializeField] private InventorySystem inventory;
 
 		[System.Serializable]
-		private class Entry { public string itemId; public int count; }
+		private class Entry { public string itemId; public int count; public ConditionSet condition; }
 		[System.Serializable]
 		private class SaveModel { public List<Entry> items = new List<Entry>(); }
 
 		public string SaveToJson()
 		{
 			var model = new SaveModel();
-			foreach (var kv in inventory.DebugEnumerate())
+			foreach (var inst in inventory.DebugEnumerateInstances())
 			{
-				var def = kv.Key;
-				if (def == null) continue;
-				model.items.Add(new Entry { itemId = def.ItemId, count = kv.Value });
+				if (inst == null || inst.Definition == null) continue;
+				model.items.Add(new Entry { itemId = inst.Definition.ItemId, count = inst.StackCount, condition = inst.Condition });
 			}
 			return JsonUtility.ToJson(model);
 		}
@@ -35,8 +34,9 @@ namespace LowPolySurvival.Game.Gameplay.Systems
 			foreach (var e in model.items)
 			{
 				var def = registry.GetById(e.itemId);
-				if (def != null && e.count > 0)
-					inventory.Add(def, e.count);
+				if (def == null || e.count <= 0) continue;
+				// Recreate counts using inventory Add. Condition granularity is not yet per-instance attachable through public API.
+				inventory.Add(def, e.count);
 			}
 		}
 	}
