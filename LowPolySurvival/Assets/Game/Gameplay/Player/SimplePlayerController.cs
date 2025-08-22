@@ -1,4 +1,5 @@
 using UnityEngine;
+using LowPolySurvival.Game.Gameplay.UI;
 
 namespace LowPolySurvival.Game.Gameplay.Player
 {
@@ -42,6 +43,7 @@ namespace LowPolySurvival.Game.Gameplay.Player
 
 		private void Update()
 		{
+			if (UIInputLock.IsLocked) return;
 			// Mouse look
 			float mouseX = Input.GetAxis("Mouse X") * lookSensitivity;
 			float mouseY = Input.GetAxis("Mouse Y") * lookSensitivity;

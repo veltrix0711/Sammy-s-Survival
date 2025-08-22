@@ -44,6 +44,9 @@ namespace LowPolySurvival.Game.Gameplay.UI
 		public void SetVisible(bool isVisible)
 		{
 			visible = isVisible;
+			Cursor.lockState = visible ? CursorLockMode.None : CursorLockMode.Locked;
+			Cursor.visible = visible;
+			if (visible) UIInputLock.Push(); else UIInputLock.Pop();
 		}
 	}
 }
