@@ -48,6 +48,7 @@ public class ItemRecipeDesignerWindow : EditorWindow
 	private List<int> recipeOutputCounts = new List<int>();
 	private string requiredKnowledge = "";
 	private float baseSeconds = 5f;
+	private bool requireBenchFlag = false;
 
 	[MenuItem("Tools/Item & Recipe Designer")]
 	public static void Open()
@@ -131,6 +132,7 @@ public class ItemRecipeDesignerWindow : EditorWindow
 		recipeId = EditorGUILayout.TextField("Recipe Id", recipeId);
 		baseSeconds = EditorGUILayout.FloatField("Base Seconds", baseSeconds);
 		requiredKnowledge = EditorGUILayout.TextField("Knowledge Token", requiredKnowledge);
+		requireBenchFlag = EditorGUILayout.Toggle("Require Bench", requireBenchFlag);
 		EditorGUILayout.Space(6);
 		EditorGUILayout.LabelField("Inputs", EditorStyles.boldLabel);
 		DrawStacks(recipeInputs, recipeInputCounts);
@@ -363,6 +365,7 @@ public class ItemRecipeDesignerWindow : EditorWindow
 		ApplyStacks(so.FindProperty("outputs"), recipeOutputs, recipeOutputCounts);
 		so.FindProperty("requiredKnowledgeToken").stringValue = requiredKnowledge;
 		so.FindProperty("baseSeconds").floatValue = baseSeconds;
+		so.FindProperty("requireBench").boolValue = requireBenchFlag;
 		so.ApplyModifiedPropertiesWithoutUndo();
 		EditorUtility.SetDirty(def);
 		AssetDatabase.SaveAssets();
